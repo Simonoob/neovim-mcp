@@ -19,6 +19,7 @@ export function shellEscape(s: string): string {
   return "'" + s.replace(/'/g, "'\\''") + "'";
 }
 
+// rg and fzf return exit code 1 for "no matches" — not an error
 export function execSafe(cmd: string, cwd: string, timeout: number): string {
   try {
     return execSync(cmd, {

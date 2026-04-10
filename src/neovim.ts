@@ -16,6 +16,7 @@ export class NeovimClient {
     return process.env.NVIM_SOCKET_PATH || "/tmp/nvim";
   }
 
+  // Creates a fresh connection per call — stateless to avoid stale socket handles
   private async connect(): Promise<Neovim> {
     const socketPath = this.getSocketPath();
     try {

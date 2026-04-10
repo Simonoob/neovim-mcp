@@ -3,7 +3,7 @@ if #clients == 0 then
   return { error = "No LSP clients running" }
 end
 
--- Collect client configs before stopping
+-- Save configs before stopping so we can restart with the same settings
 local configs = {}
 for _, client in ipairs(clients) do
   table.insert(configs, {
@@ -15,12 +15,10 @@ for _, client in ipairs(clients) do
   client:stop()
 end
 
--- Wait for clients to stop
 vim.wait(2000, function()
   return #vim.lsp.get_clients() == 0
 end, 100)
 
--- Restart each client on its original buffers
 for _, cfg in ipairs(configs) do
   if cfg.cmd then
     for _, bufnr in ipairs(cfg.buffers) do
@@ -35,7 +33,6 @@ for _, cfg in ipairs(configs) do
   end
 end
 
--- Wait for clients to come back
 vim.wait(5000, function()
   return #vim.lsp.get_clients() > 0
 end, 100)

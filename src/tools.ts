@@ -12,24 +12,21 @@ import {
   execSafe,
 } from "./utils.js";
 
-// --- Load Lua snippets from files ---
-
+// Lua snippets are read once at startup — MCP server restart needed after changes
 const luaDir = join(dirname(fileURLToPath(import.meta.url)), "lua");
-const lua = (name: string) => readFileSync(join(luaDir, name), "utf-8");
+const loadLua = (name: string) => readFileSync(join(luaDir, name), "utf-8");
 
-const DOCUMENT_SYMBOLS_LUA = lua("document-symbols.lua");
-const AST_CONTEXT_LUA = lua("ast-context.lua");
-const SEARCH_SYMBOLS_LUA = lua("search-symbols.lua");
-const GET_DIAGNOSTICS_LUA = lua("diagnostics.lua");
-const GET_REFERENCES_LUA = lua("references.lua");
-const GOTO_DEFINITION_LUA = lua("definition.lua");
-const HOVER_LUA = lua("hover.lua");
-const RESTART_LSP_LUA = lua("restart-lsp.lua");
-const IMPLEMENTATION_LUA = lua("implementation.lua");
-const GET_QUICKFIX_LUA = lua("get-quickfix.lua");
-const SET_QUICKFIX_LUA = lua("set-quickfix.lua");
-
-// --- Outline formatter (recursive, so not a one-liner) ---
+const DOCUMENT_SYMBOLS_LUA = loadLua("document-symbols.lua");
+const AST_CONTEXT_LUA = loadLua("ast-context.lua");
+const SEARCH_SYMBOLS_LUA = loadLua("search-symbols.lua");
+const GET_DIAGNOSTICS_LUA = loadLua("diagnostics.lua");
+const GET_REFERENCES_LUA = loadLua("references.lua");
+const GOTO_DEFINITION_LUA = loadLua("definition.lua");
+const HOVER_LUA = loadLua("hover.lua");
+const RESTART_LSP_LUA = loadLua("restart-lsp.lua");
+const IMPLEMENTATION_LUA = loadLua("implementation.lua");
+const GET_QUICKFIX_LUA = loadLua("get-quickfix.lua");
+const SET_QUICKFIX_LUA = loadLua("set-quickfix.lua");
 
 interface OutlineEntry {
   kind: string;
@@ -40,6 +37,7 @@ interface OutlineEntry {
   children: OutlineEntry[];
 }
 
+// Keeps matching nodes and their ancestors so the hierarchy stays intact
 function filterSymbols(entries: OutlineEntry[], query: string): OutlineEntry[] {
   const q = query.toLowerCase();
   const out: OutlineEntry[] = [];
@@ -52,18 +50,16 @@ function filterSymbols(entries: OutlineEntry[], query: string): OutlineEntry[] {
   return out;
 }
 
-function fmtOutline(entries: OutlineEntry[], depth = 0): string {
+function formatOutline(entries: OutlineEntry[], depth = 0): string {
   const lines: string[] = [];
   const indent = "  ".repeat(depth);
   for (const e of entries) {
     lines.push(`${indent}[${e.kind}] ${e.name} (L${e.line}-${e.end_line})`);
     if (e.signature) lines.push(`${indent}  ${e.signature}`);
-    if (e.children?.length) lines.push(fmtOutline(e.children, depth + 1));
+    if (e.children?.length) lines.push(formatOutline(e.children, depth + 1));
   }
   return lines.join("\n");
 }
-
-// --- Tool registration ---
 
 export function registerTools(server: McpServer, nvim: NeovimClient) {
   server.registerTool(
@@ -133,7 +129,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               : "No symbols found.",
           );
         return toolResult(
-          `# ${relativePath(file, cwd)}\n${fmtOutline(filtered)}`,
+          `# ${relativePath(file, cwd)}\n${formatOutline(filtered)}`,
         );
       } catch (e) {
         return toolError(e);
