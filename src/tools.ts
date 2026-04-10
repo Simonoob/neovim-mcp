@@ -23,7 +23,8 @@ const SEARCH_SYMBOLS_LUA = lua("search-symbols.lua");
 const GET_DIAGNOSTICS_LUA = lua("diagnostics.lua");
 const GET_REFERENCES_LUA = lua("references.lua");
 const GOTO_DEFINITION_LUA = lua("definition.lua");
-const GET_QUICKFIX_LUA = lua("quickfix.lua");
+const GET_QUICKFIX_LUA = lua("get-quickfix.lua");
+const SET_QUICKFIX_LUA = lua("set-quickfix.lua");
 
 // --- Outline formatter (recursive, so not a one-liner) ---
 
@@ -36,10 +37,7 @@ interface OutlineEntry {
   children: OutlineEntry[];
 }
 
-function filterSymbols(
-  entries: OutlineEntry[],
-  query: string,
-): OutlineEntry[] {
+function filterSymbols(entries: OutlineEntry[], query: string): OutlineEntry[] {
   const q = query.toLowerCase();
   const out: OutlineEntry[] = [];
   for (const e of entries) {
@@ -88,7 +86,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
         query: z
           .string()
           .optional()
-          .describe("Filter symbols by name (case-insensitive substring match)"),
+          .describe(
+            "Filter symbols by name (case-insensitive substring match)",
+          ),
       },
     },
     async ({ file, query }) => {
@@ -333,6 +333,47 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
         return toolResult(
           `${header} (${qf.items.length} items):\n\n${lines.join("\n")}`,
         );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+
+  server.registerTool(
+    "set_quickfix",
+    {
+      description:
+        "Set the Neovim quickfix list with a list of locations (e.g. feature touchpoints, search results, related code sites)",
+      inputSchema: {
+        items: z
+          .array(
+            z.object({
+              file: z.string().describe("Absolute file path"),
+              line: z
+                .number()
+                .optional()
+                .describe("Line number (1-indexed, defaults to 1)"),
+              col: z
+                .number()
+                .optional()
+                .describe("Column number (1-indexed, defaults to 1)"),
+              text: z
+                .string()
+                .optional()
+                .describe("Description of this location"),
+            }),
+          )
+          .describe("List of locations to populate the quickfix list"),
+        title: z.string().optional().describe("Title for the quickfix list"),
+      },
+    },
+    async ({ items, title }) => {
+      try {
+        const count = await nvim.lua<number>(SET_QUICKFIX_LUA, [
+          JSON.stringify(items),
+          title ?? "Claude",
+        ]);
+        return toolResult(`Quickfix list set with ${count} items.`);
       } catch (e) {
         return toolError(e);
       }
