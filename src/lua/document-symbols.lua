@@ -1,4 +1,4 @@
-local filepath = select(1, ...)
+local filepath = ...
 
 -- load file in a new buffer
 local bufnr = vim.fn.bufadd(filepath)
