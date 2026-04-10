@@ -24,6 +24,7 @@ const GET_DIAGNOSTICS_LUA = lua("diagnostics.lua");
 const GET_REFERENCES_LUA = lua("references.lua");
 const GOTO_DEFINITION_LUA = lua("definition.lua");
 const HOVER_LUA = lua("hover.lua");
+const RESTART_LSP_LUA = lua("restart-lsp.lua");
 const IMPLEMENTATION_LUA = lua("implementation.lua");
 const GET_QUICKFIX_LUA = lua("get-quickfix.lua");
 const SET_QUICKFIX_LUA = lua("set-quickfix.lua");
@@ -75,6 +76,29 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
           ? "Neovim connection is healthy."
           : "Neovim connection failed. Is Neovim running with --listen /tmp/nvim?",
       );
+    },
+  );
+
+  server.registerTool(
+    "restart_lsp",
+    {
+      description:
+        "Restart all running LSP clients. Use after making changes to files outside Neovim to refresh diagnostics and symbol data.",
+    },
+    async () => {
+      try {
+        const result = await nvim.lua<
+          { stopped: string[]; started: string[] } | { error: string }
+        >(RESTART_LSP_LUA);
+        if ("error" in result) return toolResult(result.error);
+        const stopped = result.stopped.join(", ");
+        const started = result.started.length
+          ? result.started.join(", ")
+          : "none (may still be starting)";
+        return toolResult(`Stopped: ${stopped}\nStarted: ${started}`);
+      } catch (e) {
+        return toolError(e);
+      }
     },
   );
 
@@ -325,7 +349,13 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       try {
         const cwd = await nvim.getCwd();
         const result = await nvim.lua<
-          Array<{ file: string; line: number; col: number; signature: string }> | { error: string }
+          | Array<{
+              file: string;
+              line: number;
+              col: number;
+              signature: string;
+            }>
+          | { error: string }
         >(IMPLEMENTATION_LUA, [file, line, col]);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
