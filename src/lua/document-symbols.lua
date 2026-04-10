@@ -1,24 +1,17 @@
 local filepath = select(1, ...)
+
+-- load file in a new buffer
 local bufnr = vim.fn.bufadd(filepath)
 vim.fn.bufload(bufnr)
 
-vim.api.nvim_buf_call(bufnr, function()
-  if vim.bo[bufnr].filetype == "" then
-    vim.cmd("filetype detect")
-  end
-end)
-
-if not vim.wait(3000, function()
+-- lsp should be already loaded. Only wait 250ms for LSP clients to be attached to the buffer
+if not vim.wait(250, function()
   return #vim.lsp.get_clients({ bufnr = bufnr }) > 0
-end, 100) then
+end) then
   return { error = "No LSP client attached to " .. filepath .. " (timed out)" }
 end
 
 local params = { textDocument = { uri = vim.uri_from_fname(filepath) } }
-local results = vim.lsp.buf_request_sync(bufnr, "textDocument/documentSymbol", params, 5000)
-if not results then
-  return { error = "LSP request timed out" }
-end
 
 local kind_map = {
   [1] = "File",
@@ -67,9 +60,25 @@ local function convert(symbols)
   return out
 end
 
-for _, res in pairs(results) do
-  if res.result and #res.result > 0 then
-    return convert(res.result)
+local process_and_return_results = function(results)
+  for _, res in pairs(results) do
+    if res.result and #res.result > 0 then
+      return convert(res.result)
+    end
   end
 end
-return {}
+
+-- get symbols with a timeout of 500ms
+local results = {}
+
+vim.lsp.buf_request_all(bufnr, "textDocument/documentSymbol", params, function(res)
+  results = process_and_return_results(res)
+end)
+
+if not vim.wait(500, function()
+  return #results > 0
+end) then
+  return { error = "LSP document symbols request timed out" }
+end
+
+return results
