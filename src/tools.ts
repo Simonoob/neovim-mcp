@@ -23,6 +23,7 @@ const SEARCH_SYMBOLS_LUA = lua("search-symbols.lua");
 const GET_DIAGNOSTICS_LUA = lua("diagnostics.lua");
 const GET_REFERENCES_LUA = lua("references.lua");
 const GOTO_DEFINITION_LUA = lua("definition.lua");
+const HOVER_LUA = lua("hover.lua");
 const GET_QUICKFIX_LUA = lua("get-quickfix.lua");
 const SET_QUICKFIX_LUA = lua("set-quickfix.lua");
 
@@ -302,6 +303,32 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
         return toolResult(
           `Definition from ${relativePath(file, cwd)}:${line}:${col}:\n\n${lines.join("\n")}`,
         );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+
+  server.registerTool(
+    "hover",
+    {
+      description:
+        "Get LSP hover information (type signature, documentation) for a symbol at a position",
+      inputSchema: {
+        file: z.string().describe("Absolute file path"),
+        line: z.number().describe("Line number (1-indexed)"),
+        col: z.number().describe("Column number (1-indexed)"),
+      },
+    },
+    async ({ file, line, col }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const result = await nvim.lua<
+          { text: string; kind?: string } | { error: string }
+        >(HOVER_LUA, [file, line, col]);
+        if ("error" in result) return toolResult(result.error);
+        const header = `Hover at ${relativePath(file, cwd)}:${line}:${col}:\n`;
+        return toolResult(header + "\n" + result.text);
       } catch (e) {
         return toolError(e);
       }
