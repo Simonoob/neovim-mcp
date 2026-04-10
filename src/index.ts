@@ -289,14 +289,25 @@ server.registerTool(
     try {
       const cwd = await nvim.getCwd();
       const result = await nvim.lua<
-        Array<{ name: string; kind: string; file: string; line: number; col: number }> | { error: string }
+        | Array<{
+            name: string;
+            kind: string;
+            file: string;
+            line: number;
+            col: number;
+          }>
+        | { error: string }
       >(SEARCH_SYMBOLS_LUA, [query]);
       if (!Array.isArray(result)) return toolResult(result.error);
-      if (!result.length) return toolResult(`No symbols found matching "${query}".`);
+      if (!result.length)
+        return toolResult(`No symbols found matching "${query}".`);
       const lines = result.map(
-        (s) => `  [${s.kind}] ${s.name} -- ${rel(s.file, cwd)}:${s.line}:${s.col}`,
+        (s) =>
+          `  [${s.kind}] ${s.name} -- ${rel(s.file, cwd)}:${s.line}:${s.col}`,
       );
-      return toolResult(`Found ${result.length} symbols matching "${query}":\n\n${lines.join("\n")}`);
+      return toolResult(
+        `Found ${result.length} symbols matching "${query}":\n\n${lines.join("\n")}`,
+      );
     } catch (e) {
       return toolError(e);
     }
@@ -346,15 +357,29 @@ server.registerTool(
     description:
       "Get LSP diagnostics (errors, warnings) for a file or the entire workspace",
     inputSchema: {
-      file: z.string().optional().describe("File path to filter diagnostics (omit for all)"),
-      severity: z.enum(["error", "warn", "info", "hint"]).optional().describe("Minimum severity level"),
+      file: z
+        .string()
+        .optional()
+        .describe("File path to filter diagnostics (omit for all)"),
+      severity: z
+        .enum(["error", "warn", "info", "hint"])
+        .optional()
+        .describe("Minimum severity level"),
     },
   },
   async ({ file, severity }) => {
     try {
       const cwd = await nvim.getCwd();
       const diags = await nvim.lua<
-        Array<{ file: string; line: number; col: number; severity: string; message: string; source: string; code: string | number }>
+        Array<{
+          file: string;
+          line: number;
+          col: number;
+          severity: string;
+          message: string;
+          source: string;
+          code: string | number;
+        }>
       >(GET_DIAGNOSTICS_LUA, [file ?? null, severity ?? null]);
       const scope = file ? ` (file: ${rel(file, cwd)})` : "";
       if (!diags?.length) return toolResult(`No diagnostics${scope}.`);
@@ -364,7 +389,9 @@ server.registerTool(
         const code = d.code ? ` (${d.code})` : "";
         return `  ${f}L${d.line}:${d.col}  ${d.severity}  ${src}${d.message}${code}`;
       });
-      return toolResult(`${diags.length} diagnostics${scope}:\n\n${lines.join("\n")}`);
+      return toolResult(
+        `${diags.length} diagnostics${scope}:\n\n${lines.join("\n")}`,
+      );
     } catch (e) {
       return toolError(e);
     }
@@ -431,10 +458,14 @@ server.registerTool(
     try {
       const cwd = await nvim.getCwd();
       const result = await nvim.lua<
-        Array<{ file: string; line: number; col: number; text: string }> | { error: string }
+        | Array<{ file: string; line: number; col: number; text: string }>
+        | { error: string }
       >(GET_REFERENCES_LUA, [file, line, col]);
       if (!Array.isArray(result)) return toolResult(result.error);
-      if (!result.length) return toolResult(`No references found at ${rel(file, cwd)}:${line}:${col}.`);
+      if (!result.length)
+        return toolResult(
+          `No references found at ${rel(file, cwd)}:${line}:${col}.`,
+        );
       const lines = result.map((r) => {
         const text = r.text ? ` -- ${r.text.trim()}` : "";
         return `  ${rel(r.file, cwd)}:${r.line}:${r.col}${text}`;
@@ -506,15 +537,21 @@ server.registerTool(
     try {
       const cwd = await nvim.getCwd();
       const result = await nvim.lua<
-        Array<{ file: string; line: number; col: number; signature: string }> | { error: string }
+        | Array<{ file: string; line: number; col: number; signature: string }>
+        | { error: string }
       >(GOTO_DEFINITION_LUA, [file, line, col]);
       if (!Array.isArray(result)) return toolResult(result.error);
-      if (!result.length) return toolResult(`No definition found at ${rel(file, cwd)}:${line}:${col}.`);
+      if (!result.length)
+        return toolResult(
+          `No definition found at ${rel(file, cwd)}:${line}:${col}.`,
+        );
       const lines = result.flatMap((d) => {
         const loc = `  ${rel(d.file, cwd)}:${d.line}:${d.col}`;
         return d.signature ? [loc, `    ${d.signature}`] : [loc];
       });
-      return toolResult(`Definition from ${rel(file, cwd)}:${line}:${col}:\n\n${lines.join("\n")}`);
+      return toolResult(
+        `Definition from ${rel(file, cwd)}:${line}:${col}:\n\n${lines.join("\n")}`,
+      );
     } catch (e) {
       return toolError(e);
     }
@@ -548,7 +585,13 @@ server.registerTool(
       const cwd = await nvim.getCwd();
       const qf = await nvim.lua<{
         title: string;
-        items: Array<{ file: string; line: number; col: number; text: string; type: string }>;
+        items: Array<{
+          file: string;
+          line: number;
+          col: number;
+          text: string;
+          type: string;
+        }>;
       }>(GET_QUICKFIX_LUA);
       if (!qf.items?.length) return toolResult("Quickfix list is empty.");
       const header = qf.title ? `Quickfix: ${qf.title}` : "Quickfix list";
@@ -556,7 +599,9 @@ server.registerTool(
         const t = item.type ? `[${item.type}] ` : "";
         return `  ${rel(item.file, cwd)}:${item.line}:${item.col}  ${t}${item.text.trim()}`;
       });
-      return toolResult(`${header} (${qf.items.length} items):\n\n${lines.join("\n")}`);
+      return toolResult(
+        `${header} (${qf.items.length} items):\n\n${lines.join("\n")}`,
+      );
     } catch (e) {
       return toolError(e);
     }
@@ -568,10 +613,14 @@ server.registerTool(
 server.registerTool(
   "fuzzy_find_files",
   {
-    description: "Fuzzy search for files by name using fzf (does not require Neovim)",
+    description:
+      "Fuzzy search for files by name using fzf (does not require Neovim)",
     inputSchema: {
       query: z.string().describe("Fuzzy search query for file names"),
-      cwd: z.string().optional().describe("Working directory (defaults to Neovim cwd)"),
+      cwd: z
+        .string()
+        .optional()
+        .describe("Working directory (defaults to Neovim cwd)"),
     },
   },
   async ({ query, cwd }) => {
@@ -583,8 +632,11 @@ server.registerTool(
         5000,
       );
       const files = out.trim().split("\n").filter(Boolean);
-      if (!files.length) return toolResult(`No files found matching "${query}".`);
-      return toolResult(`Files matching "${query}":\n\n${files.map((f) => `  ${f}`).join("\n")}`);
+      if (!files.length)
+        return toolResult(`No files found matching "${query}".`);
+      return toolResult(
+        `Files matching "${query}":\n\n${files.map((f) => `  ${f}`).join("\n")}`,
+      );
     } catch (e) {
       return toolError(e);
     }
@@ -597,8 +649,14 @@ server.registerTool(
     description: "Search file contents using ripgrep (does not require Neovim)",
     inputSchema: {
       query: z.string().describe("Search pattern (supports regex)"),
-      glob: z.string().optional().describe('File glob filter (e.g. "*.ts", "*.py")'),
-      cwd: z.string().optional().describe("Working directory (defaults to Neovim cwd)"),
+      glob: z
+        .string()
+        .optional()
+        .describe('File glob filter (e.g. "*.ts", "*.py")'),
+      cwd: z
+        .string()
+        .optional()
+        .describe("Working directory (defaults to Neovim cwd)"),
     },
   },
   async ({ query, glob, cwd }) => {
@@ -610,7 +668,10 @@ server.registerTool(
         workDir,
         10000,
       );
-      if (!out.trim()) return toolResult(`No matches found for "${query}"${glob ? ` in ${glob}` : ""}.`);
+      if (!out.trim())
+        return toolResult(
+          `No matches found for "${query}"${glob ? ` in ${glob}` : ""}.`,
+        );
       const scope = glob ? ` in ${glob}` : "";
       return toolResult(`Matches for "${query}"${scope}:\n\n${out.trim()}`);
     } catch (e) {
