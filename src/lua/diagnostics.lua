@@ -1,12 +1,10 @@
 local filepath, severity = ...
+-- arguments are optional
 
 local bufnr = nil
 if filepath and filepath ~= vim.NIL then
   bufnr = vim.fn.bufnr(filepath)
-  if bufnr == -1 then
-    bufnr = vim.fn.bufadd(filepath)
-    vim.fn.bufload(bufnr)
-  end
+  vim.fn.bufload(bufnr)
 end
 
 local opts = {}
@@ -17,12 +15,14 @@ if severity and severity ~= vim.NIL then
   end
 end
 
-local diags = vim.diagnostic.get(bufnr, opts)
+local diagnostics = vim.diagnostic.get(bufnr, opts)
+
 local result = {}
-for i, d in ipairs(diags) do
-  if i > 100 then
+for i, d in ipairs(diagnostics) do
+  if i > 100 then -- cap number of returned entities
     break
   end
+
   table.insert(result, {
     file = vim.api.nvim_buf_get_name(d.bufnr),
     line = d.lnum + 1,
@@ -33,4 +33,5 @@ for i, d in ipairs(diags) do
     code = d.code or "",
   })
 end
+
 return result
