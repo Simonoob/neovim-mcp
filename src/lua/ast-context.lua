@@ -1,10 +1,11 @@
 local filepath, line = ...
+
 local bufnr = vim.fn.bufadd(filepath)
 vim.fn.bufload(bufnr)
 
-local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
-if not ok or not parser then
-  return { { type = "error", name = "No treesitter parser for this file", line = 0 } }
+local parser, error = vim.treesitter.get_parser(bufnr, nil, { error = false })
+if error or not parser then
+  return { { type = "error", name = "No treesitter parser for this file - " .. error, line = 0 } }
 end
 
 parser:parse()
