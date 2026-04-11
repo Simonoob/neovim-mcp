@@ -18,7 +18,7 @@ const loadLua = (name: string) => readFileSync(join(luaDir, name), "utf-8");
 
 const DOCUMENT_SYMBOLS_LUA = loadLua("document-symbols.lua");
 const AST_CONTEXT_LUA = loadLua("ast-context.lua");
-const SEARCH_SYMBOLS_LUA = loadLua("search-symbols.lua");
+const WORKSPACE_SYMBOLS_LUA = loadLua("workspace-symbols.lua");
 const GET_DIAGNOSTICS_LUA = loadLua("diagnostics.lua");
 const GET_REFERENCES_LUA = loadLua("references.lua");
 const GOTO_DEFINITION_LUA = loadLua("definition.lua");
@@ -170,7 +170,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
   );
 
   server.registerTool(
-    "search_symbols",
+    "workspace_symbols",
     {
       description:
         "Search workspace symbols via LSP (functions, classes, types across the project)",
@@ -190,7 +190,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               col: number;
             }>
           | { error: string }
-        >(SEARCH_SYMBOLS_LUA, [query]);
+        >(WORKSPACE_SYMBOLS_LUA, [query]);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(`No symbols found matching "${query}".`);
