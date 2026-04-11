@@ -6,7 +6,7 @@
 ---line: integer,
 ---col: integer,
 ---signature: string,
----}|{
+---}[]|{
 ---error: string,
 ---}|nil
 return function(filepath, line, col)

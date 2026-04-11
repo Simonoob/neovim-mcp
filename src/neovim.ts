@@ -1,8 +1,5 @@
 import { attach, Neovim } from "neovim";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LuaArg = any;
-
 export class NeovimClient {
   private static instance: NeovimClient;
   private constructor() {}
@@ -22,9 +19,7 @@ export class NeovimClient {
     try {
       return attach({ socket: socketPath });
     } catch {
-      throw new Error(
-        `Cannot connect to Neovim at ${socketPath}. Is it running with --listen ${socketPath}?`,
-      );
+      throw new Error(`Cannot connect to Neovim at ${socketPath}`);
     }
   }
 
@@ -38,7 +33,7 @@ export class NeovimClient {
     }
   }
 
-  async lua<T>(code: string, args: LuaArg[] = []): Promise<T> {
+  async lua<T>(code: string, args: any[] = []): Promise<T> {
     const nvim = await this.connect();
     try {
       return (await nvim.lua(code, args)) as T;
