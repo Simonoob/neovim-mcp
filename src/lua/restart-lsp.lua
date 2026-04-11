@@ -1,4 +1,5 @@
 local clients = vim.lsp.get_clients()
+
 if #clients == 0 then
   return { error = "No LSP clients running" }
 end
@@ -15,9 +16,9 @@ for _, client in ipairs(clients) do
   client:stop()
 end
 
-vim.wait(2000, function()
+vim.wait(500, function()
   return #vim.lsp.get_clients() == 0
-end, 100)
+end)
 
 for _, cfg in ipairs(configs) do
   if cfg.cmd then
@@ -33,9 +34,9 @@ for _, cfg in ipairs(configs) do
   end
 end
 
-vim.wait(5000, function()
+vim.wait(500, function()
   return #vim.lsp.get_clients() > 0
-end, 100)
+end)
 
 local new_names = {}
 for _, client in ipairs(vim.lsp.get_clients()) do
