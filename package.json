@@ -10,7 +10,9 @@
     "build"
   ],
   "scripts": {
-    "build": "rm -rf build && tsc && cp -r src/lua build/lua && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "bundle-lua": "luabundler bundle ./src/lua/index.lua -o ./build/lua/index.lua -p \"./?.lua\"",
+    "copy-lua": "mkdir build && cp -r src/lua build/lua",
+    "build": "rm -rf build && npm run copy-lua && npm run bundle-lua && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js"
   },
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
+    "luabundler": "^1.2.3",
     "typescript": "^5.9.2"
   }
 }

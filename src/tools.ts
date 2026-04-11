@@ -11,6 +11,7 @@ import {
   shellEscape,
   execSafe,
 } from "./utils.js";
+// import { bundle as luaBundle } from "luabundle";
 
 // Lua snippets are read once at startup — MCP server restart needed after changes
 const luaDir = join(dirname(fileURLToPath(import.meta.url)), "lua");
@@ -21,7 +22,7 @@ const AST_CONTEXT_LUA = loadLua("ast-context.lua");
 const WORKSPACE_SYMBOLS_LUA = loadLua("workspace-symbols.lua");
 const GET_DIAGNOSTICS_LUA = loadLua("diagnostics.lua");
 const GET_REFERENCES_LUA = loadLua("references.lua");
-const GOTO_DEFINITION_LUA = loadLua("definition.lua");
+const INDEX_LUA = loadLua("index.lua");
 const HOVER_LUA = loadLua("hover.lua");
 const RESTART_LSP_LUA = loadLua("restart-lsp.lua");
 const IMPLEMENTATION_LUA = loadLua("implementation.lua");
@@ -311,7 +312,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               signature: string;
             }>
           | { error: string }
-        >(GOTO_DEFINITION_LUA, [file, line, col]);
+        >(`${INDEX_LUA}.definition`, [file, line, col]);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(

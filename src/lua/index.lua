@@ -1,0 +1,15 @@
+return {
+  -- ast_context = require("src.lua.ast-context"),
+  definition = require("src.lua.definition"),
+  -- diagnostics = require("src.lua.diagnostics"),
+  -- document_symbols = require("src.lua.document-symbols"),
+  -- get_quickfix = require("src.lua.get-quickfix"),
+  -- hover = require("src.lua.hover"),
+  -- implementation = require("src.lua.implementation"),
+  -- index = require("src.lua.index"),
+  -- references = require("src.lua.references"),
+  -- restart_lsp = require("src.lua.restart-lsp"),
+  -- set_quickfix = require("src.lua.set-quickfix"),
+  -- utils = require("src.lua.utils"),
+  -- workspace_symbols = require("src.lua.workspace-symbols"),
+}
