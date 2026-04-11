@@ -14,7 +14,8 @@
     "copy-lua": "mkdir build && cp -r src/lua build/lua",
     "build": "rm -rf build && npm run copy-lua && npm run bundle-lua && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "test": "vitest run"
   },
   "license": "MIT",
   "dependencies": {
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "luabundler": "^1.2.3",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.4"
   }
 }
