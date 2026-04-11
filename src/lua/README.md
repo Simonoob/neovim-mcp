@@ -4,6 +4,8 @@ Lua snippets executed inside Neovim via `nvim.lua()`. Each file is a self-contai
 
 These run in the Neovim Lua runtime with full access to `vim.*` APIs, LSP, and treesitter.
 
+`utils.lua` contains utility functions shared between files.
+
 ## Conventions
 
 - Arguments come in via `local arg1, arg2 = ...`
