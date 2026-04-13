@@ -1,3 +1,7 @@
+> [!CAUTION]
+⚠️ **WIP**: This MCP in under heavy development and testing. It should not be considered stable.
+
+
 # neovim-mcp
 
 This MCP server connects your AI assistant to your running Neovim instance, giving it access to LSP and treesitter: go-to-definition, find references, hover, diagnostics, symbol search, and more.
@@ -66,7 +70,6 @@ claude mcp add --transport stdio --scope user neovim-nav -e NVIM_SOCKET_PATH=/tm
 ```
 
 ```json
-// Other clients
 {
   "neovim-nav": {
     "type": "stdio",
