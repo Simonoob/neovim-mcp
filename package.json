@@ -15,7 +15,8 @@
     "build": "rm -rf build && npm run copy-lua && npm run bundle-lua && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
-    "test": "vitest run"
+    "test": "NVIM_SOCKET_PATH=/tmp/nvim-mcp-test vitest run",
+    "test:watch": "npm run test -- --watch"
   },
   "license": "MIT",
   "dependencies": {

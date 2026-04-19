@@ -8,7 +8,7 @@ vim.fn.bufload(bufnr)
 if not vim.wait(250, function()
   return #vim.lsp.get_clients({ bufnr = bufnr }) > 0
 end) then
-  return { error = "No LSP client attached to " .. filepath .. " (timed out)" }
+  return { error = "No LSP client attached to " .. bufnr .. " (timed out)" }
 end
 
 local params = { textDocument = { uri = vim.uri_from_fname(filepath) } }
