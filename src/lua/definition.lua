@@ -54,7 +54,7 @@ return function(filepath, line, col)
     result = process_and_return_results(res)
   end)
 
-  if not vim.wait(500, function()
+  if not vim.wait(2000, function()
     return result ~= nil
   end) then
     return { error = "LSP definition request timed out" }

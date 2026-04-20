@@ -33,8 +33,9 @@ export class NeovimClient {
     }
   }
 
-  async lua<T>(code: string, args: any[] = []): Promise<T> {
+  async rawLua<T>(code: string, args: any[] = []): Promise<T> {
     const nvim = await this.connect();
+    // throw new Error("SERVER CODE:  " + code);
     try {
       return (await nvim.lua(code, args)) as T;
     } catch (error) {
@@ -43,6 +44,11 @@ export class NeovimClient {
       );
     }
   }
+
+  // async callLuaModuleFunction<T>(module:string, functionName: string, args: any[]=[]): Promise<T>{
+  //   const formattedLua
+  //   return rawLua(formattedLua)
+  // }
 
   async getCwd(): Promise<string> {
     const nvim = await this.connect();

@@ -1,34 +1,31 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { z } from "zod";
 import { NeovimClient } from "./neovim.js";
 import {
   toolResult,
   toolError,
   relativePath,
-  shellEscape,
-  execSafe,
+  getProjectRoot,
 } from "./utils.js";
-// import { bundle as luaBundle } from "luabundle";
 
 // Lua snippets are read once at startup — MCP server restart needed after changes
-const luaDir = join(dirname(fileURLToPath(import.meta.url)), "lua");
+const luaDir = join(await getProjectRoot(), "/build/", "lua");
+
 const loadLua = (name: string) => readFileSync(join(luaDir, name), "utf-8");
 
-const DOCUMENT_SYMBOLS_LUA = loadLua("document-symbols.lua");
-const AST_CONTEXT_LUA = loadLua("ast-context.lua");
-const WORKSPACE_SYMBOLS_LUA = loadLua("workspace-symbols.lua");
-const GET_DIAGNOSTICS_LUA = loadLua("diagnostics.lua");
-const GET_REFERENCES_LUA = loadLua("references.lua");
-const DEFINITION_LUA_OLD = loadLua("definition-old.lua");
+// const DOCUMENT_SYMBOLS_LUA = loadLua("document-symbols.lua");
+// const AST_CONTEXT_LUA = loadLua("ast-context.lua");
+// const WORKSPACE_SYMBOLS_LUA = loadLua("workspace-symbols.lua");
+// const GET_DIAGNOSTICS_LUA = loadLua("diagnostics.lua");
+// const GET_REFERENCES_LUA = loadLua("references.lua");
 const INDEX_LUA = loadLua("index.lua");
-const HOVER_LUA = loadLua("hover.lua");
-const RESTART_LSP_LUA = loadLua("restart-lsp.lua");
-const IMPLEMENTATION_LUA = loadLua("implementation.lua");
-const GET_QUICKFIX_LUA = loadLua("get-quickfix.lua");
-const SET_QUICKFIX_LUA = loadLua("set-quickfix.lua");
+// const HOVER_LUA = loadLua("hover.lua");
+// const RESTART_LSP_LUA = loadLua("restart-lsp.lua");
+// const IMPLEMENTATION_LUA = loadLua("implementation.lua");
+// const GET_QUICKFIX_LUA = loadLua("get-quickfix.lua");
+// const SET_QUICKFIX_LUA = loadLua("set-quickfix.lua");
 
 interface OutlineEntry {
   kind: string;
@@ -85,9 +82,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
     async () => {
       try {
-        const result = await nvim.lua<
+        const result = await nvim.rawLua<
           { stopped: string[]; started: string[] } | { error: string }
-        >(RESTART_LSP_LUA);
+        >(`${INDEX_LUA}.restart_lsp()`);
         if ("error" in result) return toolResult(result.error);
         const stopped = result.stopped.join(", ");
         const started = result.started.length
@@ -305,7 +302,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.rawLua<
           | Array<{
               file: string;
               line: number;
@@ -313,8 +310,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               signature: string;
             }>
           | { error: string }
-          // >(`${DEFINITION_LUA_OLD}`, [file, line, col]);
-        >(`${INDEX_LUA}.definition`, [file, line, col]);
+        >(`${INDEX_LUA}.definition("${file}", ${line}, ${col})`);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(

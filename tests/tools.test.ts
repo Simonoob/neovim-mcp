@@ -3,6 +3,8 @@ import { describe, expect, vi, beforeAll, afterAll, test } from "vitest";
 import { registerTools } from "../src/tools.js";
 import { NeovimClient } from "../src/neovim.js";
 import { exec, spawn } from "node:child_process";
+import { mock } from "node:test";
+import { getProjectRoot } from "../src/utils.js";
 
 // Helper to capture registered tool handlers
 function createMockServer() {
@@ -89,8 +91,10 @@ describe("Tools", () => {
     registerTools(mockServer, nvimClient);
 
     const handler = handlers.get("goto_definition")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`
+    console.log({filepath})
     const result = await handler({
-      file: "/Users/simonoob/coding/neovim-mcp/tests/fixtures/typescript/index.ts",
+      file: filepath,
       line: 8,
       col: 1, // `main` function call
     });
