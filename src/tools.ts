@@ -82,7 +82,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
     async () => {
       try {
-        const result = await nvim.rawLua<
+        const result = await nvim.lua<
           { stopped: string[]; started: string[] } | { error: string }
         >(`${INDEX_LUA}.restart_lsp()`);
         if ("error" in result) return toolResult(result.error);
@@ -97,44 +97,43 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
   );
 
-  // server.registerTool(
-  //   "get_document_symbols",
-  //   {
-  //     description:
-  //       "Get LSP document symbols for a file (functions, classes, types with line numbers and nesting). Optionally filter by name.",
-  //     inputSchema: {
-  //       file: z.string().describe("Absolute or relative file path"),
-  //       query: z
-  //         .string()
-  //         .optional()
-  //         .describe(
-  //           "Filter symbols by name (case-insensitive substring match)",
-  //         ),
-  //     },
-  //   },
-  //   async ({ file, query }) => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const result = await nvim.lua<OutlineEntry[] | { error: string }>(
-  //         DOCUMENT_SYMBOLS_LUA,
-  //         [file],
-  //       );
-  //       if (!Array.isArray(result)) return toolResult(result.error);
-  //       const filtered = query ? filterSymbols(result, query) : result;
-  //       if (!filtered.length)
-  //         return toolResult(
-  //           query
-  //             ? `No symbols matching "${query}" in ${relativePath(file, cwd)}.`
-  //             : "No symbols found.",
-  //         );
-  //       return toolResult(
-  //         `# ${relativePath(file, cwd)}\n${formatOutline(filtered)}`,
-  //       );
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
+  server.registerTool(
+    "get_document_symbols",
+    {
+      description:
+        "Get LSP document symbols for a file (functions, classes, types with line numbers and nesting). Optionally filter by name.",
+      inputSchema: {
+        file: z.string().describe("Absolute or relative file path"),
+        query: z
+          .string()
+          .optional()
+          .describe(
+            "Filter symbols by name (case-insensitive substring match)",
+          ),
+      },
+    },
+    async ({ file, query }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const result = await nvim.lua<OutlineEntry[] | { error: string }>(
+          `${INDEX_LUA}.get_document_symbols("${file}")`,
+        );
+        if (!Array.isArray(result)) return toolResult(result.error);
+        const filtered = query ? filterSymbols(result, query) : result;
+        if (!filtered.length)
+          return toolResult(
+            query
+              ? `No symbols matching "${query}" in ${relativePath(file, cwd)}.`
+              : "No symbols found.",
+          );
+        return toolResult(
+          `# ${relativePath(file, cwd)}\n${formatOutline(filtered)}`,
+        );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
   //
   // server.registerTool(
   //   "get_ast_context",
@@ -302,7 +301,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.rawLua<
+        const result = await nvim.lua<
           | Array<{
               file: string;
               line: number;
@@ -310,7 +309,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               signature: string;
             }>
           | { error: string }
-        >(`${INDEX_LUA}.definition("${file}", ${line}, ${col})`);
+        >(`${INDEX_LUA}.goto_definition("${file}", ${line}, ${col})`);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(

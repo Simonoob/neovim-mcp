@@ -105,6 +105,25 @@ describe("Tools", () => {
     );
   });
 
+  test("get_document_symbols", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("get_document_symbols")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
+    const result = await handler({
+      file: filepath,
+    });
+
+    expect(result.content[0].text).toMatch(
+      `# tests/fixtures/typescript/index.ts
+[Constant] main (L3-6)
+  [Constant] variable (L4-4)`,
+    );
+  });
+
   // test("workspace_symbols", async () => {
   //   const { mockServer, handlers } = createMockServer();
   //   let nvimClient = NeovimClient.getInstance();
