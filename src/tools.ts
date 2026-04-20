@@ -134,38 +134,38 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       }
     },
   );
-  //
-  // server.registerTool(
-  //   "get_ast_context",
-  //   {
-  //     description:
-  //       "Get the treesitter scope chain at a position (shows enclosing functions, classes, blocks)",
-  //     inputSchema: {
-  //       file: z.string().describe("Absolute or relative file path"),
-  //       line: z.number().describe("Line number (1-indexed)"),
-  //     },
-  //   },
-  //   async ({ file, line }) => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const chain = await nvim.lua<
-  //         Array<{ type: string; name: string | null; line: number }>
-  //       >(AST_CONTEXT_LUA, [file, line]);
-  //       if (!chain?.length)
-  //         return toolResult("No AST context at this position.");
-  //       const header = `AST context at ${relativePath(file, cwd)}:${line}:\n`;
-  //       const lines = chain.map((n, i) => {
-  //         const indent = "  ".repeat(i + 1);
-  //         const name = n.name ? ` "${n.name}"` : "";
-  //         const marker = i === chain.length - 1 ? " <-- here" : "";
-  //         return `${indent}${n.type}${name} (L${n.line})${marker}`;
-  //       });
-  //       return toolResult(header + lines.join("\n"));
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
+
+  server.registerTool(
+    "get_ast_context",
+    {
+      description:
+        "Get the treesitter scope chain at a position (shows enclosing functions, classes, blocks)",
+      inputSchema: {
+        file: z.string().describe("Absolute or relative file path"),
+        line: z.number().describe("Line number (1-indexed)"),
+      },
+    },
+    async ({ file, line }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const chain = await nvim.lua<
+          Array<{ type: string; name: string | null; line: number }>
+        >(`${INDEX_LUA}.get_ast_context("${file}", ${line})`);
+        if (!chain?.length)
+          return toolResult("No AST context at this position.");
+        const header = `AST context at ${relativePath(file, cwd)}:${line}:\n`;
+        const lines = chain.map((n, i) => {
+          const indent = "  ".repeat(i + 1);
+          const name = n.name ? ` "${n.name}"` : "";
+          const marker = i === chain.length - 1 ? " <-- here" : "";
+          return `${indent}${n.type}${name} (L${n.line})${marker}`;
+        });
+        return toolResult(header + lines.join("\n"));
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
   //
   // server.registerTool(
   //   "workspace_symbols",

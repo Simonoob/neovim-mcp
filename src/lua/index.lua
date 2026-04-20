@@ -1,5 +1,5 @@
 return {
-  -- ast_context = require("src.lua.ast-context"),
+  get_ast_context = require("src.lua.get-ast-context"),
   goto_definition = require("src.lua.goto-definition"),
   -- diagnostics = require("src.lua.diagnostics"),
   get_document_symbols = require("src.lua.get-document-symbols"),

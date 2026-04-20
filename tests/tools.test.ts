@@ -124,6 +124,28 @@ describe("Tools", () => {
     );
   });
 
+  test("get_ast_context", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("get_ast_context")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
+    const result = await handler({
+      file: filepath,
+      line: 4,
+    });
+
+    expect(result.content[0].text)
+      .toMatch(`AST context at tests/fixtures/typescript/index.ts:4:
+  program (L1)
+    lexical_declaration (L3)
+      variable_declarator "main" (L3)
+        arrow_function (L3)
+          statement_block (L3) <-- here`);
+  });
+
   // test("workspace_symbols", async () => {
   //   const { mockServer, handlers } = createMockServer();
   //   let nvimClient = NeovimClient.getInstance();
