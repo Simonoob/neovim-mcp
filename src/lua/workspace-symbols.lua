@@ -66,7 +66,7 @@ vim.lsp.buf_request_all(bufnr, "workspace/symbol", { query = query }, function(r
   results = process_and_return_results(res)
 end)
 
-if not vim.wait(500, function()
+if not vim.wait(10000, function()
   return results ~= nil
 end) then
   return { error = "LSP workspace symbols request timed out" }

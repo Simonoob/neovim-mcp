@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import { describe, expect, vi, beforeAll, afterAll, test } from "vitest";
 import { registerTools } from "../src/tools.js";
 import { NeovimClient } from "../src/neovim.js";
 import { exec, spawn } from "node:child_process";
@@ -55,7 +55,7 @@ describe("Tools", () => {
     exec("rm -rf /tmp/nvim-mcp-test");
   });
 
-  it("vim_health", async () => {
+  test("vim_health", async () => {
     const { mockServer, handlers } = createMockServer();
     const nvimClient = NeovimClient.getInstance();
 
@@ -69,7 +69,7 @@ describe("Tools", () => {
     });
   });
 
-  it("restart_lsp", async () => {
+  test("restart_lsp", async () => {
     const { mockServer, handlers } = createMockServer();
     let nvimClient = NeovimClient.getInstance();
 
@@ -82,20 +82,27 @@ describe("Tools", () => {
     expect(result.content[0].text).toMatch("Started:");
   });
 
-  // it("get_document_symbols", async () => {
-  //   const { mockServer, handlers } = createMockServer();
-  //   let nvimClient = NeovimClient.getInstance();
-  //
-  //   registerTools(mockServer, nvimClient);
-  //
-  //   const handler = handlers.get("get_document_symbols")!;
-  //   console.log({ handler });
-  //   const result = await handler("./fixtures/typescript/index.ts");
-  //   //TODO: check results
-  //   expect(result).toBe("bau");
-  // });
+  test("go_to_definition", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
 
-  // it("workspace_symbols", async () => {
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("goto_definition")!;
+    const result = await handler({
+      file: "/Users/simonoob/coding/neovim-mcp/tests/fixtures/typescript/index.ts",
+      line: 8,
+      col: 1, // `main` function call
+    });
+
+    expect(result.content[0].text).toMatch(
+      `Definition from tests/fixtures/typescript/index.ts:8:1:
+
+  tests/fixtures/typescript/index.ts:3:14`,
+    );
+  });
+
+  // test("workspace_symbols", async () => {
   //   const { mockServer, handlers } = createMockServer();
   //   let nvimClient = NeovimClient.getInstance();
   //
@@ -105,5 +112,5 @@ describe("Tools", () => {
   //   const result = await handler("main");
   //   //TODO: check results
   //   expect(result).toBe("miao");
-  // });
+  // }, 20000);
 });
