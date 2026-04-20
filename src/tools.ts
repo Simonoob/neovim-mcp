@@ -188,7 +188,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               col: number;
             }>
           | { error: string }
-        >(`${INDEX_LUA}.workspace_symbols(${query ? `"${query}"` : undefined})`);
+        >(
+          `${INDEX_LUA}.workspace_symbols(${query ? `"${query}"` : undefined})`,
+        );
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(`No symbols found matching "${query}".`);
@@ -204,54 +206,56 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       }
     },
   );
-  //
-  // server.registerTool(
-  //   "get_diagnostics",
-  //   {
-  //     description:
-  //       "Get LSP diagnostics (errors, warnings) for a file or the entire workspace",
-  //     inputSchema: {
-  //       file: z
-  //         .string()
-  //         .optional()
-  //         .describe("File path to filter diagnostics (omit for all)"),
-  //       severity: z
-  //         .enum(["error", "warn", "info", "hint"])
-  //         .optional()
-  //         .describe("Minimum severity level"),
-  //     },
-  //   },
-  //   async ({ file, severity }) => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const diags = await nvim.lua<
-  //         Array<{
-  //           file: string;
-  //           line: number;
-  //           col: number;
-  //           severity: string;
-  //           message: string;
-  //           source: string;
-  //           code: string | number;
-  //         }>
-  //       >(GET_DIAGNOSTICS_LUA, [file ?? null, severity ?? null]);
-  //       const scope = file ? ` (file: ${relativePath(file, cwd)})` : "";
-  //       if (!diags?.length) return toolResult(`No diagnostics${scope}.`);
-  //       const lines = diags.map((d) => {
-  //         const f = file ? "" : `${relativePath(d.file, cwd)}:`;
-  //         const src = d.source ? `[${d.source}] ` : "";
-  //         const code = d.code ? ` (${d.code})` : "";
-  //         return `  ${f}L${d.line}:${d.col}  ${d.severity}  ${src}${d.message}${code}`;
-  //       });
-  //       return toolResult(
-  //         `${diags.length} diagnostics${scope}:\n\n${lines.join("\n")}`,
-  //       );
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
-  //
+
+  server.registerTool(
+    "get_diagnostics",
+    {
+      description:
+        "Get LSP diagnostics (errors, warnings) for a file or the entire workspace",
+      inputSchema: {
+        file: z
+          .string()
+          .optional()
+          .describe("File path to filter diagnostics (omit for all)"),
+        severity: z
+          .enum(["error", "warn", "info", "hint"])
+          .optional()
+          .describe("Minimum severity level"),
+      },
+    },
+    async ({ file, severity }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const diags = await nvim.lua<
+          Array<{
+            file: string;
+            line: number;
+            col: number;
+            severity: string;
+            message: string;
+            source: string;
+            code: string | number;
+          }>
+        >(
+          `${INDEX_LUA}.get_diagnostics(${file ? `"${file}"` : undefined}, ${severity ? `"${severity}"` : undefined})`,
+        );
+        const scope = file ? ` (file: ${relativePath(file, cwd)})` : "";
+        if (!diags?.length) return toolResult(`No diagnostics${scope}.`);
+        const lines = diags.map((d) => {
+          const f = file ? "" : `${relativePath(d.file, cwd)}:`;
+          const src = d.source ? `[${d.source}] ` : "";
+          const code = d.code ? ` (${d.code})` : "";
+          return `  ${f}L${d.line}:${d.col}  ${d.severity}  ${src}${d.message}${code}`;
+        });
+        return toolResult(
+          `${diags.length} diagnostics${scope}:\n\n${lines.join("\n")}`,
+        );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+
   // server.registerTool(
   //   "get_references",
   //   {

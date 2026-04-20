@@ -45,7 +45,6 @@ export class NeovimClient {
     }
   }
 
-
   async getCwd(): Promise<string> {
     const nvim = await this.connect();
     return String(await nvim.call("getcwd"));

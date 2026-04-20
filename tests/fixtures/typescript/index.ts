@@ -6,3 +6,5 @@ const main = () => {
 };
 
 main();
+
+const unusedVar = "useless";

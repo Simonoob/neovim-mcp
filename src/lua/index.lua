@@ -1,7 +1,7 @@
 return {
   get_ast_context = require("src.lua.get-ast-context"),
   goto_definition = require("src.lua.goto-definition"),
-  -- diagnostics = require("src.lua.diagnostics"),
+  get_diagnostics = require("src.lua.get-diagnostics"),
   get_document_symbols = require("src.lua.get-document-symbols"),
   -- get_quickfix = require("src.lua.get-quickfix"),
   -- hover = require("src.lua.hover"),

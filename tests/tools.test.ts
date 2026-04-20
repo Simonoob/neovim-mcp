@@ -40,7 +40,7 @@ describe("Tools", () => {
       "./tests/fixtures/typescript/index.ts",
     ]);
     // await nvim startup and LSP init
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     nvimProcess?.stdout?.on("data", (data) => {
       console.warn(`Neovim info: ${data}`);
@@ -158,4 +158,33 @@ describe("Tools", () => {
   //   //TODO: check results
   //   expect(result).toBe("miao");
   // }, 20000);
+
+  test("get_diagnostics", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("get_diagnostics")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
+    const result = await handler({
+      file: filepath,
+    });
+
+    expect(result.content[0].text)
+      .toMatch(`1 diagnostics (file: tests/fixtures/typescript/index.ts):
+
+  L10:7  HINT  [tsserver] 'unusedVar' is declared but its value is never read. (6133)`);
+
+    const resultWithSeverity = await handler({
+      file: filepath,
+      severity: "hint",
+    });
+
+    expect(resultWithSeverity.content[0].text)
+      .toMatch(`1 diagnostics (file: tests/fixtures/typescript/index.ts):
+
+  L10:7  HINT  [tsserver] 'unusedVar' is declared but its value is never read. (6133)`);
+  });
+
 });
