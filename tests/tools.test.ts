@@ -91,8 +91,7 @@ describe("Tools", () => {
     registerTools(mockServer, nvimClient);
 
     const handler = handlers.get("goto_definition")!;
-    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`
-    console.log({filepath})
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
     const result = await handler({
       file: filepath,
       line: 8,
