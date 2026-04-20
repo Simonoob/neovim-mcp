@@ -146,6 +146,7 @@ describe("Tools", () => {
           statement_block (L3) <-- here`);
   });
 
+  // TODO: figure this timeout out
   // test("workspace_symbols", async () => {
   //   const { mockServer, handlers } = createMockServer();
   //   let nvimClient = NeovimClient.getInstance();

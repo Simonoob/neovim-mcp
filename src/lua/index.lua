@@ -11,5 +11,5 @@ return {
   restart_lsp = require("src.lua.restart-lsp"),
   -- set_quickfix = require("src.lua.set-quickfix"),
   -- utils = require("src.lua.utils"),
-  -- workspace_symbols = require("src.lua.workspace-symbols"),
+  workspace_symbols = require("src.lua.workspace-symbols"),
 }

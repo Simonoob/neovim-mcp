@@ -166,44 +166,44 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       }
     },
   );
-  //
-  // server.registerTool(
-  //   "workspace_symbols",
-  //   {
-  //     description:
-  //       "Search workspace symbols via LSP (functions, classes, types across the project)",
-  //     inputSchema: {
-  //       query: z.string().describe("Symbol name or pattern to search for"),
-  //     },
-  //   },
-  //   async ({ query }) => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const result = await nvim.lua<
-  //         | Array<{
-  //             name: string;
-  //             kind: string;
-  //             file: string;
-  //             line: number;
-  //             col: number;
-  //           }>
-  //         | { error: string }
-  //       >(WORKSPACE_SYMBOLS_LUA, [query]);
-  //       if (!Array.isArray(result)) return toolResult(result.error);
-  //       if (!result.length)
-  //         return toolResult(`No symbols found matching "${query}".`);
-  //       const lines = result.map(
-  //         (s) =>
-  //           `  [${s.kind}] ${s.name} -- ${relativePath(s.file, cwd)}:${s.line}:${s.col}`,
-  //       );
-  //       return toolResult(
-  //         `Found ${result.length} symbols matching "${query}":\n\n${lines.join("\n")}`,
-  //       );
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
+
+  server.registerTool(
+    "workspace_symbols",
+    {
+      description:
+        "Search workspace symbols via LSP (functions, classes, types across the project)",
+      inputSchema: {
+        query: z.string().describe("Symbol name or pattern to search for"),
+      },
+    },
+    async ({ query }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const result = await nvim.lua<
+          | Array<{
+              name: string;
+              kind: string;
+              file: string;
+              line: number;
+              col: number;
+            }>
+          | { error: string }
+        >(`${INDEX_LUA}.workspace_symbols(${query ? `"${query}"` : undefined})`);
+        if (!Array.isArray(result)) return toolResult(result.error);
+        if (!result.length)
+          return toolResult(`No symbols found matching "${query}".`);
+        const lines = result.map(
+          (s) =>
+            `  [${s.kind}] ${s.name} -- ${relativePath(s.file, cwd)}:${s.line}:${s.col}`,
+        );
+        return toolResult(
+          `Found ${result.length} symbols matching "${query}":\n\n${lines.join("\n")}`,
+        );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
   //
   // server.registerTool(
   //   "get_diagnostics",
