@@ -4,7 +4,7 @@ return {
   get_diagnostics = require("src.lua.get-diagnostics"),
   get_document_symbols = require("src.lua.get-document-symbols"),
   -- get_quickfix = require("src.lua.get-quickfix"),
-  -- hover = require("src.lua.hover"),
+  hover = require("src.lua.hover"),
   -- implementation = require("src.lua.implementation"),
   -- index = require("src.lua.index"),
   -- references = require("src.lua.references"),

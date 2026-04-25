@@ -94,14 +94,14 @@ describe("Tools", () => {
     const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
     const result = await handler({
       file: filepath,
-      line: 8,
+      line: 9,
       col: 1, // `main` function call
     });
 
     expect(result.content[0].text).toMatch(
-      `Definition from tests/fixtures/typescript/index.ts:8:1:
+      `Definition from tests/fixtures/typescript/index.ts:9:1:
 
-  tests/fixtures/typescript/index.ts:3:14`,
+  tests/fixtures/typescript/index.ts:4:14`,
     );
   });
 
@@ -119,8 +119,8 @@ describe("Tools", () => {
 
     expect(result.content[0].text).toMatch(
       `# tests/fixtures/typescript/index.ts
-[Constant] main (L3-6)
-  [Constant] variable (L4-4)`,
+[Constant] main (L4-7)
+  [Constant] variable (L5-5)`,
     );
   });
 
@@ -134,16 +134,16 @@ describe("Tools", () => {
     const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
     const result = await handler({
       file: filepath,
-      line: 4,
+      line: 5,
     });
 
     expect(result.content[0].text)
-      .toMatch(`AST context at tests/fixtures/typescript/index.ts:4:
+      .toMatch(`AST context at tests/fixtures/typescript/index.ts:5:
   program (L1)
-    lexical_declaration (L3)
-      variable_declarator "main" (L3)
-        arrow_function (L3)
-          statement_block (L3) <-- here`);
+    lexical_declaration (L4)
+      variable_declarator "main" (L4)
+        arrow_function (L4)
+          statement_block (L4) <-- here`);
   });
 
   // TODO: figure this timeout out
@@ -174,7 +174,7 @@ describe("Tools", () => {
     expect(result.content[0].text)
       .toMatch(`1 diagnostics (file: tests/fixtures/typescript/index.ts):
 
-  L10:7  HINT  [tsserver] 'unusedVar' is declared but its value is never read. (6133)`);
+  L11:7  HINT  [tsserver] 'unusedVar' is declared but its value is never read. (6133)`);
 
     const resultWithSeverity = await handler({
       file: filepath,
@@ -184,7 +184,27 @@ describe("Tools", () => {
     expect(resultWithSeverity.content[0].text)
       .toMatch(`1 diagnostics (file: tests/fixtures/typescript/index.ts):
 
-  L10:7  HINT  [tsserver] 'unusedVar' is declared but its value is never read. (6133)`);
+  L11:7  HINT  [tsserver] 'unusedVar' is declared but its value is never read. (6133)`);
   });
 
+  test("hover", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("hover")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
+    const result = await handler({
+      file: filepath,
+      line: 9,
+      col: 1, // `main` function call
+    });
+    expect(result.content[0].type).toBe("text");
+    expect(result.content[0].text).toMatch(
+      "Hover at tests/fixtures/typescript/index.ts:9:1:",
+    );
+    expect(result.content[0].text).toMatch("const main: () => string");
+    expect(result.content[0].text).toMatch("the main function");
+  });
 });

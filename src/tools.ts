@@ -13,19 +13,7 @@ import {
 // Lua snippets are read once at startup — MCP server restart needed after changes
 const luaDir = join(await getProjectRoot(), "/build/", "lua");
 
-const loadLua = (name: string) => readFileSync(join(luaDir, name), "utf-8");
-
-// const DOCUMENT_SYMBOLS_LUA = loadLua("document-symbols.lua");
-// const AST_CONTEXT_LUA = loadLua("ast-context.lua");
-// const WORKSPACE_SYMBOLS_LUA = loadLua("workspace-symbols.lua");
-// const GET_DIAGNOSTICS_LUA = loadLua("diagnostics.lua");
-// const GET_REFERENCES_LUA = loadLua("references.lua");
-const INDEX_LUA = loadLua("index.lua");
-// const HOVER_LUA = loadLua("hover.lua");
-// const RESTART_LSP_LUA = loadLua("restart-lsp.lua");
-// const IMPLEMENTATION_LUA = loadLua("implementation.lua");
-// const GET_QUICKFIX_LUA = loadLua("get-quickfix.lua");
-// const SET_QUICKFIX_LUA = loadLua("set-quickfix.lua");
+const INDEX_LUA = readFileSync(join(luaDir, "index.lua"), "utf-8");
 
 interface OutlineEntry {
   kind: string;
@@ -373,31 +361,31 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
   //   },
   // );
   //
-  // server.registerTool(
-  //   "hover",
-  //   {
-  //     description:
-  //       "Get LSP hover information (type signature, documentation) for a symbol at a position",
-  //     inputSchema: {
-  //       file: z.string().describe("Absolute file path"),
-  //       line: z.number().describe("Line number (1-indexed)"),
-  //       col: z.number().describe("Column number (1-indexed)"),
-  //     },
-  //   },
-  //   async ({ file, line, col }) => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const result = await nvim.lua<
-  //         { text: string; kind?: string } | { error: string }
-  //       >(HOVER_LUA, [file, line, col]);
-  //       if ("error" in result) return toolResult(result.error);
-  //       const header = `Hover at ${relativePath(file, cwd)}:${line}:${col}:\n`;
-  //       return toolResult(header + "\n" + result.text);
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
+  server.registerTool(
+    "hover",
+    {
+      description:
+        "Get LSP hover information (type signature, documentation) for a symbol at a position",
+      inputSchema: {
+        file: z.string().describe("Absolute file path"),
+        line: z.number().describe("Line number (1-indexed)"),
+        col: z.number().describe("Column number (1-indexed)"),
+      },
+    },
+    async ({ file, line, col }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const result = await nvim.lua<
+          { text: string; kind?: string } | { error: string }
+        >(`${INDEX_LUA}.hover("${file}",${[line, col].join(",")})`);
+        if ("error" in result) return toolResult(result.error);
+        const header = `Hover at ${relativePath(file, cwd)}:${line}:${col}:\n`;
+        return toolResult(header + "\n" + result.text);
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
   //
   // server.registerTool(
   //   "get_quickfix",
