@@ -1,6 +1,6 @@
 {
   "name": "neovim-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for structured code navigation via Neovim's treesitter and LSP",
   "type": "module",
   "bin": {
