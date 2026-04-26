@@ -1,8 +1,9 @@
 ---@param filepath string
 ---@param line integer
 return function(filepath, line)
-  local bufnr = vim.fn.bufadd(filepath)
-  vim.fn.bufload(bufnr)
+  local utils = require("src.lua.utils")
+
+  local bufnr = utils.load_buffer_with_path(filepath)
 
   local parser, error = vim.treesitter.get_parser(bufnr, nil, { error = false })
   if error or not parser then

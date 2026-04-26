@@ -1,12 +1,13 @@
 ---@param filepath string
----@param sevcerity string
+---@param severity string
 return function(filepath, severity)
   -- arguments are optional
 
   local bufnr = nil
   if filepath and filepath ~= vim.NIL then
-    bufnr = vim.fn.bufnr(filepath)
-    vim.fn.bufload(bufnr)
+    local utils = require("src.lua.utils")
+
+    utils.load_buffer_with_path(filepath)
   end
 
   local opts = {}

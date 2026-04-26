@@ -2,15 +2,10 @@
 ---@param line integer
 ---@param col integer
 return function(filepath, line, col)
-  local bufnr = vim.fn.bufadd(filepath)
-  vim.fn.bufload(bufnr)
+  local utils = require("src.lua.utils")
+  local bufnr = utils.load_buffer_with_path(filepath)
 
-  -- lsp should be already loaded. Only wait 250ms for LSP clients to be attached to the buffer
-  if not vim.wait(250, function()
-    return #vim.lsp.get_clients({ bufnr = bufnr }) > 0
-  end) then
-    return { error = "No LSP client attached to " .. filepath .. " (timed out)" }
-  end
+  utils.lsp_available_await(bufnr)
 
   local params = {
     textDocument = { uri = vim.uri_from_fname(filepath) },

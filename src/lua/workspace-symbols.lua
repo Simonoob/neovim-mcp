@@ -3,11 +3,8 @@ return function(query)
   -- buffer should be already opened, no need to load it
   local bufnr = vim.api.nvim_get_current_buf()
 
-  if not vim.wait(250, function()
-    return #vim.lsp.get_clients({ bufnr = bufnr }) > 0
-  end) then
-    return { error = "No LSP client attached to current buffer" }
-  end
+  local utils = require("src.lua.utils")
+  utils.lsp_available_await(bufnr)
 
   local kind_map = {
     [1] = "File",

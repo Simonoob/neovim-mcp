@@ -6,7 +6,6 @@ return {
   workspace_symbols = require("src.lua.workspace-symbols"),
   hover = require("src.lua.hover"),
   goto_implementation = require("src.lua.goto-implementation"),
-  -- index = require("src.lua.index"),
   get_references = require("src.lua.get-references"),
   restart_lsp = require("src.lua.restart-lsp"),
   -- start_lsp
