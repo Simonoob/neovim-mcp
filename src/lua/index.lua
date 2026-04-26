@@ -9,6 +9,8 @@ return {
   -- index = require("src.lua.index"),
   -- references = require("src.lua.references"),
   restart_lsp = require("src.lua.restart-lsp"),
+  -- start_lsp
+  -- get_lsp
   -- set_quickfix = require("src.lua.set-quickfix"),
   -- utils = require("src.lua.utils"),
   workspace_symbols = require("src.lua.workspace-symbols"),

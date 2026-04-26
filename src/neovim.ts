@@ -1,4 +1,5 @@
 import { attach, Neovim } from "neovim";
+import { string } from "zod/v4";
 
 export class NeovimClient {
   private static instance: NeovimClient;
@@ -33,11 +34,18 @@ export class NeovimClient {
     }
   }
 
-  async lua<T>(code: string, args: any[] = []): Promise<T> {
-    const nvim = await this.connect();
+  async callLuaFunction<T>(
+    code: string,
+    args: (string | number | undefined)[] = [],
+  ): Promise<T> {
     // throw new Error("SERVER CODE:  " + code);
     try {
-      return (await nvim.lua(code, args)) as T;
+      const nvim = await this.connect();
+      const formattedArgs = args
+        .map((arg) => (typeof arg === "string" ? `"${arg}"` : arg))
+        .join(",")
+        .replaceAll(/,$/gm, ""); //remove trailing ","
+      return (await nvim.lua(`${code}(${formattedArgs})`)) as T;
     } catch (error) {
       throw new Error(
         `Neovim: ${error instanceof Error ? error.message : String(error)}`,

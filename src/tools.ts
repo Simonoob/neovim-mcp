@@ -70,9 +70,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
     async () => {
       try {
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           { stopped: string[]; started: string[] } | { error: string }
-        >(`${INDEX_LUA}.restart_lsp()`);
+        >(`${INDEX_LUA}.restart_lsp`);
         if ("error" in result) return toolResult(result.error);
         const stopped = result.stopped.join(", ");
         const started = result.started.length
@@ -103,9 +103,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, query }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<OutlineEntry[] | { error: string }>(
-          `${INDEX_LUA}.get_document_symbols("${file}")`,
-        );
+        const result = await nvim.callLuaFunction<
+          OutlineEntry[] | { error: string }
+        >(`${INDEX_LUA}.get_document_symbols`, [file]);
         if (!Array.isArray(result)) return toolResult(result.error);
         const filtered = query ? filterSymbols(result, query) : result;
         if (!filtered.length)
@@ -136,9 +136,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line }) => {
       try {
         const cwd = await nvim.getCwd();
-        const chain = await nvim.lua<
+        const chain = await nvim.callLuaFunction<
           Array<{ type: string; name: string | null; line: number }>
-        >(`${INDEX_LUA}.get_ast_context("${file}", ${line})`);
+        >(`${INDEX_LUA}.get_ast_context`, [file, line]);
         if (!chain?.length)
           return toolResult("No AST context at this position.");
         const header = `AST context at ${relativePath(file, cwd)}:${line}:\n`;
@@ -167,7 +167,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ query }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           | Array<{
               name: string;
               kind: string;
@@ -214,7 +214,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, severity }) => {
       try {
         const cwd = await nvim.getCwd();
-        const diags = await nvim.lua<
+        const diags = await nvim.callLuaFunction<
           Array<{
             file: string;
             line: number;
@@ -224,9 +224,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
             source: string;
             code: string | number;
           }>
-        >(
-          `${INDEX_LUA}.get_diagnostics(${file ? `"${file}"` : undefined}, ${severity ? `"${severity}"` : undefined})`,
-        );
+        >(`${INDEX_LUA}.get_diagnostics`, [file, severity]);
         const scope = file ? ` (file: ${relativePath(file, cwd)})` : "";
         if (!diags?.length) return toolResult(`No diagnostics${scope}.`);
         const lines = diags.map((d) => {
@@ -293,7 +291,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           | Array<{
               file: string;
               line: number;
@@ -301,7 +299,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               signature: string;
             }>
           | { error: string }
-        >(`${INDEX_LUA}.goto_definition("${file}", ${line}, ${col})`);
+        >(`${INDEX_LUA}.goto_definition`, [file, line, col]);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(
@@ -375,9 +373,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           { text: string; kind?: string } | { error: string }
-        >(`${INDEX_LUA}.hover("${file}",${[line, col].join(",")})`);
+        >(`${INDEX_LUA}.hover`, [file, line, col]);
         if ("error" in result) return toolResult(result.error);
         const header = `Hover at ${relativePath(file, cwd)}:${line}:${col}:\n`;
         return toolResult(header + "\n" + result.text);

@@ -3,7 +3,6 @@ import { describe, expect, vi, beforeAll, afterAll, test } from "vitest";
 import { registerTools } from "../src/tools.js";
 import { NeovimClient } from "../src/neovim.js";
 import { exec, spawn } from "node:child_process";
-import { mock } from "node:test";
 import { getProjectRoot } from "../src/utils.js";
 
 // Helper to capture registered tool handlers
