@@ -108,6 +108,12 @@ Remember to connect both your server and Neovim instance to the same socket:
 | `get_lsp` | get active LSP clients |
 | `vim_health` | Check connection with the Neovim instance |
 
+## Compared to other projects
+
+| Project | Diffs |
+|---|---|
+| [mcp-neovim-server](https://github.com/bigcodegen/mcp-neovim-server) | mcp-neovim-server is about overall control of your Neovim instance, with focus on text editing. This project focuses on code navigation instead, using Neovim for easy access to LSP, treesitter and the quickfix list |
+
 ## Contributing
 
 See [src/README.md](src/README.md) for project structure and how to add new tools.
