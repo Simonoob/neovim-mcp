@@ -13,6 +13,6 @@ return function(items_json, title)
     })
   end
 
-  vim.fn.setqflist({}, " ", { title = title or "Claude", items = qf_items })
+  vim.fn.setqflist({}, " ", { title = title or "AI", items = qf_items })
   return #qf_items
 end
