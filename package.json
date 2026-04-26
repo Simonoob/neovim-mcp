@@ -1,6 +1,6 @@
 {
   "name": "neovim-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for structured code navigation via Neovim's treesitter and LSP",
   "type": "module",
   "bin": {
@@ -10,18 +10,24 @@
     "build"
   ],
   "scripts": {
-    "build": "rm -rf build && tsc && cp -r src/lua build/lua && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "bundle-lua": "luabundler bundle ./src/lua/index.lua -o ./build/lua/index.lua -p \"./?.lua\"",
+    "build": "rm -rf build && mkdir build && npm run bundle-lua && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "test": "npm run build && NVIM_SOCKET_PATH=/tmp/nvim-mcp-test vitest run",
+    "test:watch": "npm run test -- --watch"
   },
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
+    "find-up": "^8.0.0",
     "neovim": "^5.3.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "typescript": "^5.9.2"
+    "luabundler": "^1.2.3",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.4"
   }
 }

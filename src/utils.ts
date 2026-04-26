@@ -1,4 +1,6 @@
+import { findUp } from "find-up";
 import { execSync } from "node:child_process";
+import { dirname } from "node:path";
 
 export function toolResult(text: string) {
   return { content: [{ type: "text" as const, text }] };
@@ -32,4 +34,8 @@ export function execSafe(cmd: string, cwd: string, timeout: number): string {
     if ((error as { status?: number })?.status === 1) return "";
     throw error;
   }
+}
+
+export async function getProjectRoot(): Promise<string> {
+  return dirname((await findUp("package.json"))!);
 }

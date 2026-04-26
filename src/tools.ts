@@ -1,32 +1,19 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { z } from "zod";
 import { NeovimClient } from "./neovim.js";
 import {
   toolResult,
   toolError,
   relativePath,
-  shellEscape,
-  execSafe,
+  getProjectRoot,
 } from "./utils.js";
 
 // Lua snippets are read once at startup — MCP server restart needed after changes
-const luaDir = join(dirname(fileURLToPath(import.meta.url)), "lua");
-const loadLua = (name: string) => readFileSync(join(luaDir, name), "utf-8");
+const luaDir = join(await getProjectRoot(), "/build/", "lua");
 
-const DOCUMENT_SYMBOLS_LUA = loadLua("document-symbols.lua");
-const AST_CONTEXT_LUA = loadLua("ast-context.lua");
-const WORKSPACE_SYMBOLS_LUA = loadLua("workspace-symbols.lua");
-const GET_DIAGNOSTICS_LUA = loadLua("diagnostics.lua");
-const GET_REFERENCES_LUA = loadLua("references.lua");
-const GOTO_DEFINITION_LUA = loadLua("definition.lua");
-const HOVER_LUA = loadLua("hover.lua");
-const RESTART_LSP_LUA = loadLua("restart-lsp.lua");
-const IMPLEMENTATION_LUA = loadLua("implementation.lua");
-const GET_QUICKFIX_LUA = loadLua("get-quickfix.lua");
-const SET_QUICKFIX_LUA = loadLua("set-quickfix.lua");
+const INDEX_LUA = readFileSync(join(luaDir, "index.lua"), "utf-8");
 
 interface OutlineEntry {
   kind: string;
@@ -83,15 +70,53 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
     async () => {
       try {
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           { stopped: string[]; started: string[] } | { error: string }
-        >(RESTART_LSP_LUA);
+        >(`${INDEX_LUA}.restart_lsp`);
         if ("error" in result) return toolResult(result.error);
         const stopped = result.stopped.join(", ");
         const started = result.started.length
           ? result.started.join(", ")
           : "none (may still be starting)";
         return toolResult(`Stopped: ${stopped}\nStarted: ${started}`);
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+  server.registerTool(
+    "get_lsp",
+    {
+      description: "get all running LSP clients and all available ones",
+    },
+    async () => {
+      try {
+        const result = await nvim.callLuaFunction<
+          { active: string[]; available: string[] } | { error: string }
+        >(`${INDEX_LUA}.get_lsp`);
+        if ("error" in result) return toolResult(result.error);
+        const active = result.active.length ? result.active.join(", ") : "none";
+        const available = result.available.length
+          ? result.available.join(", ")
+          : "none";
+        return toolResult(`active: ${active}\navailable: ${available}`);
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+  server.registerTool(
+    "start_lsp",
+    {
+      description: "start a specific LSP server",
+      inputSchema: {
+        name: z.string().describe("LSP name"),
+      },
+    },
+    async ({name}) => {
+      try {
+        await nvim.callLuaFunction(`${INDEX_LUA}.start_lsp`, [name]);
+        return toolResult(`started LSP ${name}`);
       } catch (e) {
         return toolError(e);
       }
@@ -116,10 +141,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, query }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<OutlineEntry[] | { error: string }>(
-          DOCUMENT_SYMBOLS_LUA,
-          [file],
-        );
+        const result = await nvim.callLuaFunction<
+          OutlineEntry[] | { error: string }
+        >(`${INDEX_LUA}.get_document_symbols`, [file]);
         if (!Array.isArray(result)) return toolResult(result.error);
         const filtered = query ? filterSymbols(result, query) : result;
         if (!filtered.length)
@@ -150,9 +174,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line }) => {
       try {
         const cwd = await nvim.getCwd();
-        const chain = await nvim.lua<
+        const chain = await nvim.callLuaFunction<
           Array<{ type: string; name: string | null; line: number }>
-        >(AST_CONTEXT_LUA, [file, line]);
+        >(`${INDEX_LUA}.get_ast_context`, [file, line]);
         if (!chain?.length)
           return toolResult("No AST context at this position.");
         const header = `AST context at ${relativePath(file, cwd)}:${line}:\n`;
@@ -181,7 +205,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ query }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           | Array<{
               name: string;
               kind: string;
@@ -190,7 +214,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               col: number;
             }>
           | { error: string }
-        >(WORKSPACE_SYMBOLS_LUA, [query]);
+        >(
+          `${INDEX_LUA}.workspace_symbols(${query ? `"${query}"` : undefined})`,
+        );
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(`No symbols found matching "${query}".`);
@@ -226,7 +252,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, severity }) => {
       try {
         const cwd = await nvim.getCwd();
-        const diags = await nvim.lua<
+        const diags = await nvim.callLuaFunction<
           Array<{
             file: string;
             line: number;
@@ -236,7 +262,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
             source: string;
             code: string | number;
           }>
-        >(GET_DIAGNOSTICS_LUA, [file ?? null, severity ?? null]);
+        >(`${INDEX_LUA}.get_diagnostics`, [file, severity]);
         const scope = file ? ` (file: ${relativePath(file, cwd)})` : "";
         if (!diags?.length) return toolResult(`No diagnostics${scope}.`);
         const lines = diags.map((d) => {
@@ -268,10 +294,10 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           | Array<{ file: string; line: number; col: number; text: string }>
           | { error: string }
-        >(GET_REFERENCES_LUA, [file, line, col]);
+        >(`${INDEX_LUA}.get_references`, [file, line, col]);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(
@@ -303,7 +329,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           | Array<{
               file: string;
               line: number;
@@ -311,7 +337,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               signature: string;
             }>
           | { error: string }
-        >(GOTO_DEFINITION_LUA, [file, line, col]);
+        >(`${INDEX_LUA}.goto_definition`, [file, line, col]);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(
@@ -344,7 +370,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           | Array<{
               file: string;
               line: number;
@@ -352,7 +378,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
               signature: string;
             }>
           | { error: string }
-        >(IMPLEMENTATION_LUA, [file, line, col]);
+        >(`${INDEX_LUA}.goto_implementation`, [file, line, col]);
         if (!Array.isArray(result)) return toolResult(result.error);
         if (!result.length)
           return toolResult(
@@ -385,9 +411,9 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async ({ file, line, col }) => {
       try {
         const cwd = await nvim.getCwd();
-        const result = await nvim.lua<
+        const result = await nvim.callLuaFunction<
           { text: string; kind?: string } | { error: string }
-        >(HOVER_LUA, [file, line, col]);
+        >(`${INDEX_LUA}.hover`, [file, line, col]);
         if ("error" in result) return toolResult(result.error);
         const header = `Hover at ${relativePath(file, cwd)}:${line}:${col}:\n`;
         return toolResult(header + "\n" + result.text);
@@ -403,7 +429,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     async () => {
       try {
         const cwd = await nvim.getCwd();
-        const qf = await nvim.lua<{
+        const qf = await nvim.callLuaFunction<{
           title: string;
           items: Array<{
             file: string;
@@ -412,7 +438,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
             text: string;
             type: string;
           }>;
-        }>(GET_QUICKFIX_LUA);
+        }>(`${INDEX_LUA}.get_quickfix`);
         if (!qf.items?.length) return toolResult("Quickfix list is empty.");
         const header = qf.title ? `Quickfix: ${qf.title}` : "Quickfix list";
         const lines = qf.items.map((item) => {
@@ -458,82 +484,11 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
     async ({ items, title }) => {
       try {
-        const count = await nvim.lua<number>(SET_QUICKFIX_LUA, [
-          JSON.stringify(items),
-          title ?? "Claude",
-        ]);
+        const count = await nvim.callLuaFunction<number>(
+          `${INDEX_LUA}.set_quickfix`,
+          [JSON.stringify(items), title ?? "AI"],
+        );
         return toolResult(`Quickfix list set with ${count} items.`);
-      } catch (e) {
-        return toolError(e);
-      }
-    },
-  );
-
-  server.registerTool(
-    "fuzzy_find_files",
-    {
-      description:
-        "Fuzzy search for files by name using fzf (does not require Neovim)",
-      inputSchema: {
-        query: z.string().describe("Fuzzy search query for file names"),
-        cwd: z
-          .string()
-          .optional()
-          .describe("Working directory (defaults to Neovim cwd)"),
-      },
-    },
-    async ({ query, cwd }) => {
-      try {
-        const workDir = cwd || (await nvim.getCwd());
-        const out = execSafe(
-          `rg --files --color never -g '!.git' -g '!node_modules' | fzf --filter=${shellEscape(query)} | head -20`,
-          workDir,
-          5000,
-        );
-        const files = out.trim().split("\n").filter(Boolean);
-        if (!files.length)
-          return toolResult(`No files found matching "${query}".`);
-        return toolResult(
-          `Files matching "${query}":\n\n${files.map((f) => `  ${f}`).join("\n")}`,
-        );
-      } catch (e) {
-        return toolError(e);
-      }
-    },
-  );
-
-  server.registerTool(
-    "fuzzy_grep",
-    {
-      description:
-        "Search file contents using ripgrep (does not require Neovim)",
-      inputSchema: {
-        query: z.string().describe("Search pattern (supports regex)"),
-        glob: z
-          .string()
-          .optional()
-          .describe('File glob filter (e.g. "*.ts", "*.py")'),
-        cwd: z
-          .string()
-          .optional()
-          .describe("Working directory (defaults to Neovim cwd)"),
-      },
-    },
-    async ({ query, glob, cwd }) => {
-      try {
-        const workDir = cwd || (await nvim.getCwd());
-        const globArg = glob ? `-g ${shellEscape(glob)}` : "";
-        const out = execSafe(
-          `rg --color never --line-number --no-heading --max-count 5 --max-columns 200 ${globArg} -g '!.git' -g '!node_modules' ${shellEscape(query)} | head -30`,
-          workDir,
-          10000,
-        );
-        if (!out.trim())
-          return toolResult(
-            `No matches found for "${query}"${glob ? ` in ${glob}` : ""}.`,
-          );
-        const scope = glob ? ` in ${glob}` : "";
-        return toolResult(`Matches for "${query}"${scope}:\n\n${out.trim()}`);
       } catch (e) {
         return toolError(e);
       }

@@ -1,7 +1,5 @@
 import { attach, Neovim } from "neovim";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LuaArg = any;
+import { string } from "zod/v4";
 
 export class NeovimClient {
   private static instance: NeovimClient;
@@ -22,9 +20,7 @@ export class NeovimClient {
     try {
       return attach({ socket: socketPath });
     } catch {
-      throw new Error(
-        `Cannot connect to Neovim at ${socketPath}. Is it running with --listen ${socketPath}?`,
-      );
+      throw new Error(`Cannot connect to Neovim at ${socketPath}`);
     }
   }
 
@@ -38,10 +34,21 @@ export class NeovimClient {
     }
   }
 
-  async lua<T>(code: string, args: LuaArg[] = []): Promise<T> {
-    const nvim = await this.connect();
+  async callLuaFunction<T>(
+    code: string,
+    args: (string | number | undefined)[] = [],
+  ): Promise<T> {
+    // throw new Error("SERVER CODE:  " + code);
     try {
-      return (await nvim.lua(code, args)) as T;
+      const nvim = await this.connect();
+      const formattedArgs = args
+        .map((arg) =>
+          typeof arg === "string" ? `"${arg.replaceAll('"', '\\"')}"` : arg,
+        )
+        .join(",")
+        .replaceAll(/,$/gm, ""); //remove trailing ","
+      // throw `${code}(${formattedArgs})`;
+      return (await nvim.lua(`${code}(${formattedArgs})`)) as T;
     } catch (error) {
       throw new Error(
         `Neovim: ${error instanceof Error ? error.message : String(error)}`,
