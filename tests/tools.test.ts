@@ -199,11 +199,32 @@ describe("Tools", () => {
       line: 9,
       col: 1, // `main` function call
     });
-    expect(result.content[0].type).toBe("text");
     expect(result.content[0].text).toMatch(
       "Hover at tests/fixtures/typescript/index.ts:9:1:",
     );
     expect(result.content[0].text).toMatch("const main: () => string");
     expect(result.content[0].text).toMatch("the main function");
+  });
+
+  test("get_references", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("get_references")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
+    const result = await handler({
+      file: filepath,
+      line: 9,
+      col: 1, // `main` function call
+    });
+    expect(result.content[0].text).toMatch("2 references");
+    expect(result.content[0].text).toMatch(
+      "tests/fixtures/typescript/index.ts:4:7 -- const main = () => {",
+    );
+    expect(result.content[0].text).toMatch(
+      "tests/fixtures/typescript/index.ts:9:1 -- main();",
+    );
   });
 });

@@ -242,42 +242,42 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
   );
 
-  // server.registerTool(
-  //   "get_references",
-  //   {
-  //     description:
-  //       "Find all references to a symbol at a given position via LSP",
-  //     inputSchema: {
-  //       file: z.string().describe("Absolute file path"),
-  //       line: z.number().describe("Line number (1-indexed)"),
-  //       col: z.number().describe("Column number (1-indexed)"),
-  //     },
-  //   },
-  //   async ({ file, line, col }) => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const result = await nvim.lua<
-  //         | Array<{ file: string; line: number; col: number; text: string }>
-  //         | { error: string }
-  //       >(GET_REFERENCES_LUA, [file, line, col]);
-  //       if (!Array.isArray(result)) return toolResult(result.error);
-  //       if (!result.length)
-  //         return toolResult(
-  //           `No references found at ${relativePath(file, cwd)}:${line}:${col}.`,
-  //         );
-  //       const lines = result.map((r) => {
-  //         const text = r.text ? ` -- ${r.text.trim()}` : "";
-  //         return `  ${relativePath(r.file, cwd)}:${r.line}:${r.col}${text}`;
-  //       });
-  //       return toolResult(
-  //         `${result.length} references:\n\n${lines.join("\n")}`,
-  //       );
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
-  //
+  server.registerTool(
+    "get_references",
+    {
+      description:
+        "Find all references to a symbol at a given position via LSP",
+      inputSchema: {
+        file: z.string().describe("Absolute file path"),
+        line: z.number().describe("Line number (1-indexed)"),
+        col: z.number().describe("Column number (1-indexed)"),
+      },
+    },
+    async ({ file, line, col }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const result = await nvim.callLuaFunction<
+          | Array<{ file: string; line: number; col: number; text: string }>
+          | { error: string }
+        >(`${INDEX_LUA}.get_references`, [file, line, col]);
+        if (!Array.isArray(result)) return toolResult(result.error);
+        if (!result.length)
+          return toolResult(
+            `No references found at ${relativePath(file, cwd)}:${line}:${col}.`,
+          );
+        const lines = result.map((r) => {
+          const text = r.text ? ` -- ${r.text.trim()}` : "";
+          return `  ${relativePath(r.file, cwd)}:${r.line}:${r.col}${text}`;
+        });
+        return toolResult(
+          `${result.length} references:\n\n${lines.join("\n")}`,
+        );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+
   server.registerTool(
     "goto_definition",
     {

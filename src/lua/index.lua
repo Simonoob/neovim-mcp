@@ -7,7 +7,7 @@ return {
   hover = require("src.lua.hover"),
   -- implementation = require("src.lua.implementation"),
   -- index = require("src.lua.index"),
-  -- references = require("src.lua.references"),
+  get_references = require("src.lua.get-references"),
   restart_lsp = require("src.lua.restart-lsp"),
   -- start_lsp
   -- get_lsp
