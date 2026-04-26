@@ -1,7 +1,7 @@
 # neovim-mcp
 Make your AI agent leverage Neovim for code navigation.
 
-This MCP server allows you to leverage your Neovim installation so that your AI agent can:
+This MCP server allows you to access your Neovim instance so that your AI agent can:
 - use LSP functionalities: go to definition, find references, find symbols etc.
 - use Treesitter to inspect the AST (abstract syntaxt tree)
 - read and write to your quickfix list
@@ -10,7 +10,7 @@ This MCP server allows you to leverage your Neovim installation so that your AI 
 This is my typical workflow:
 1. open the project in Neovim
 2. instruct the agent to e.g. find the flow of a feature in the codebase
-3. the agent uses builtin bash tools (e.g. `grep` and `find`) as well as tools from this MCP
+3. the agent uses builtin bash tools (e.g. `grep` and `find`) as well as tools from this MCP to navigate the code
 4. the agent returns a summary of the feature and saves the result locations to the Neovim quickfix list, with details for each location
 
 ## Requirements
