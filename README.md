@@ -112,7 +112,7 @@ Remember to connect both your server and Neovim instance to the same socket:
 
 | Project | Diffs |
 |---|---|
-| [mcp-neovim-server](https://github.com/bigcodegen/mcp-neovim-server) | mcp-neovim-server is about overall control of your Neovim instance, with focus on text editing. This project focuses on code navigation instead, using Neovim for easy access to LSP, treesitter and the quickfix list |
+| [mcp-neovim-server](https://github.com/bigcodegen/mcp-neovim-server) | mcp-neovim-server is about overall control of your Neovim instance, with focus on text editing. This project focuses only on code navigation instead. |
 
 ## Contributing
 
