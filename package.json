@@ -11,8 +11,7 @@
   ],
   "scripts": {
     "bundle-lua": "luabundler bundle ./src/lua/index.lua -o ./build/lua/index.lua -p \"./?.lua\"",
-    "copy-lua": "mkdir build && cp -r src/lua build/lua",
-    "build": "rm -rf build && npm run copy-lua && npm run bundle-lua && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "build": "rm -rf build && mkdir build && npm run bundle-lua && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "test": "npm run build && NVIM_SOCKET_PATH=/tmp/nvim-mcp-test vitest run",
