@@ -3,7 +3,7 @@ return {
   goto_definition = require("src.lua.goto-definition"),
   get_diagnostics = require("src.lua.get-diagnostics"),
   get_document_symbols = require("src.lua.get-document-symbols"),
-  -- get_quickfix = require("src.lua.get-quickfix"),
+  workspace_symbols = require("src.lua.workspace-symbols"),
   hover = require("src.lua.hover"),
   goto_implementation = require("src.lua.goto-implementation"),
   -- index = require("src.lua.index"),
@@ -11,6 +11,6 @@ return {
   restart_lsp = require("src.lua.restart-lsp"),
   -- start_lsp
   -- get_lsp
-  -- set_quickfix = require("src.lua.set-quickfix"),
-  workspace_symbols = require("src.lua.workspace-symbols"),
+  get_quickfix = require("src.lua.get-quickfix"),
+  set_quickfix = require("src.lua.set-quickfix"),
 }

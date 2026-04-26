@@ -317,7 +317,7 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       }
     },
   );
-  //
+
   server.registerTool(
     "goto_implementation",
     {
@@ -384,76 +384,76 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       }
     },
   );
-  //
-  // server.registerTool(
-  //   "get_quickfix",
-  //   { description: "Get the current Neovim quickfix list contents" },
-  //   async () => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const qf = await nvim.lua<{
-  //         title: string;
-  //         items: Array<{
-  //           file: string;
-  //           line: number;
-  //           col: number;
-  //           text: string;
-  //           type: string;
-  //         }>;
-  //       }>(GET_QUICKFIX_LUA);
-  //       if (!qf.items?.length) return toolResult("Quickfix list is empty.");
-  //       const header = qf.title ? `Quickfix: ${qf.title}` : "Quickfix list";
-  //       const lines = qf.items.map((item) => {
-  //         const t = item.type ? `[${item.type}] ` : "";
-  //         return `  ${relativePath(item.file, cwd)}:${item.line}:${item.col}  ${t}${item.text.trim()}`;
-  //       });
-  //       return toolResult(
-  //         `${header} (${qf.items.length} items):\n\n${lines.join("\n")}`,
-  //       );
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
-  //
-  // server.registerTool(
-  //   "set_quickfix",
-  //   {
-  //     description:
-  //       "Set the Neovim quickfix list with a list of locations (e.g. feature touchpoints, search results, related code sites)",
-  //     inputSchema: {
-  //       items: z
-  //         .array(
-  //           z.object({
-  //             file: z.string().describe("Absolute file path"),
-  //             line: z
-  //               .number()
-  //               .optional()
-  //               .describe("Line number (1-indexed, defaults to 1)"),
-  //             col: z
-  //               .number()
-  //               .optional()
-  //               .describe("Column number (1-indexed, defaults to 1)"),
-  //             text: z
-  //               .string()
-  //               .optional()
-  //               .describe("Description of this location"),
-  //           }),
-  //         )
-  //         .describe("List of locations to populate the quickfix list"),
-  //       title: z.string().optional().describe("Title for the quickfix list"),
-  //     },
-  //   },
-  //   async ({ items, title }) => {
-  //     try {
-  //       const count = await nvim.lua<number>(SET_QUICKFIX_LUA, [
-  //         JSON.stringify(items),
-  //         title ?? "Claude",
-  //       ]);
-  //       return toolResult(`Quickfix list set with ${count} items.`);
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
+
+  server.registerTool(
+    "get_quickfix",
+    { description: "Get the current Neovim quickfix list contents" },
+    async () => {
+      try {
+        const cwd = await nvim.getCwd();
+        const qf = await nvim.callLuaFunction<{
+          title: string;
+          items: Array<{
+            file: string;
+            line: number;
+            col: number;
+            text: string;
+            type: string;
+          }>;
+        }>(`${INDEX_LUA}.get_quickfix`);
+        if (!qf.items?.length) return toolResult("Quickfix list is empty.");
+        const header = qf.title ? `Quickfix: ${qf.title}` : "Quickfix list";
+        const lines = qf.items.map((item) => {
+          const t = item.type ? `[${item.type}] ` : "";
+          return `  ${relativePath(item.file, cwd)}:${item.line}:${item.col}  ${t}${item.text.trim()}`;
+        });
+        return toolResult(
+          `${header} (${qf.items.length} items):\n\n${lines.join("\n")}`,
+        );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+
+  server.registerTool(
+    "set_quickfix",
+    {
+      description:
+        "Set the Neovim quickfix list with a list of locations (e.g. feature touchpoints, search results, related code sites)",
+      inputSchema: {
+        items: z
+          .array(
+            z.object({
+              file: z.string().describe("Absolute file path"),
+              line: z
+                .number()
+                .optional()
+                .describe("Line number (1-indexed, defaults to 1)"),
+              col: z
+                .number()
+                .optional()
+                .describe("Column number (1-indexed, defaults to 1)"),
+              text: z
+                .string()
+                .optional()
+                .describe("Description of this location"),
+            }),
+          )
+          .describe("List of locations to populate the quickfix list"),
+        title: z.string().optional().describe("Title for the quickfix list"),
+      },
+    },
+    async ({ items, title }) => {
+      try {
+        const count = await nvim.callLuaFunction<number>(
+          `${INDEX_LUA}.set_quickfix`,
+          [JSON.stringify(items), title ?? "AI"],
+        );
+        return toolResult(`Quickfix list set with ${count} items.`);
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
 }

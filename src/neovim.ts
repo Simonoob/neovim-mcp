@@ -42,7 +42,9 @@ export class NeovimClient {
     try {
       const nvim = await this.connect();
       const formattedArgs = args
-        .map((arg) => (typeof arg === "string" ? `"${arg}"` : arg))
+        .map((arg) =>
+          typeof arg === "string" ? `"${arg.replaceAll('"', '\\"')}"` : arg,
+        )
         .join(",")
         .replaceAll(/,$/gm, ""); //remove trailing ","
       return (await nvim.lua(`${code}(${formattedArgs})`)) as T;

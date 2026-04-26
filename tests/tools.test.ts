@@ -246,4 +246,58 @@ describe("Tools", () => {
       "tests/fixtures/typescript/index.ts:4:7",
     );
   });
+
+  test("goto_implementation", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("goto_implementation")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
+    const result = await handler({
+      file: filepath,
+      line: 9,
+      col: 1, // `main` function call
+    });
+    expect(result.content[0].text).toMatch("1 implementations");
+    expect(result.content[0].text).toMatch(
+      "tests/fixtures/typescript/index.ts:4:7",
+    );
+  });
+
+  test("set_quickfix", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("set_quickfix")!;
+    const result = await handler({
+      items: [
+        {
+          file: `${await getProjectRoot()}/tests/fixtures/index.lua`,
+          line: 4,
+          col: 7,
+          text: "main fn definition",
+        },
+      ],
+      title: "list title",
+    });
+    expect(result.content[0].text).toMatch("Quickfix list set with 1 items");
+  });
+
+  test("get_quickfix", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("get_quickfix")!;
+    const result = await handler();
+    expect(result.content[0].text).toMatch("Quickfix: list title (1 items):");
+    expect(result.content[0].text).toMatch(
+      "tests/fixtures/index.lua:4:7  main fn definition",
+    );
+  });
 });
