@@ -96,6 +96,18 @@ describe("Tools", () => {
     expect(result.content[0].text).toMatch("available:");
   });
 
+  // test("start_lsp", async () => {
+  //   const { mockServer, handlers } = createMockServer();
+  //   let nvimClient = NeovimClient.getInstance();
+  //
+  //   registerTools(mockServer, nvimClient);
+  //
+  //   const handler = handlers.get("start_lsp")!;
+  //   const result = await handler({ name: "test_name" });
+  //
+  //   expect(result.content[0].text).toMatch("implement start_lsp function");
+  // });
+
   test("go_to_definition", async () => {
     const { mockServer, handlers } = createMockServer();
     let nvimClient = NeovimClient.getInstance();

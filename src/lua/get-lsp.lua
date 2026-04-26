@@ -2,7 +2,8 @@ return function()
   local utils = require("src.lua.utils")
   local active_clients = vim.lsp.get_clients()
 
-  local available_clients = vim.lsp._enabled_configs
+  -- local available_clients = vim.lsp._enabled_configs
+  local available_clients = { { name = "implement function to get available clients" } }
 
   return {
     active = utils.table_map(active_clients, function(client)

@@ -105,6 +105,23 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       }
     },
   );
+  server.registerTool(
+    "start_lsp",
+    {
+      description: "start a specific LSP server",
+      inputSchema: {
+        name: z.string().describe("LSP name"),
+      },
+    },
+    async ({name}) => {
+      try {
+        await nvim.callLuaFunction(`${INDEX_LUA}.start_lsp`, [name]);
+        return toolResult(`started LSP ${name}`);
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
 
   server.registerTool(
     "get_document_symbols",

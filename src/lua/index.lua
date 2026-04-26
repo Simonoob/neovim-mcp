@@ -7,9 +7,9 @@ return {
   hover = require("src.lua.hover"),
   goto_implementation = require("src.lua.goto-implementation"),
   get_references = require("src.lua.get-references"),
-  restart_lsp = require("src.lua.restart-lsp"),
-  -- start_lsp = require("src.lua.start-lsp"),
+  start_lsp = require("src.lua.start-lsp"),
   get_lsp = require("src.lua.get-lsp"),
+  restart_lsp = require("src.lua.restart-lsp"),
   get_quickfix = require("src.lua.get-quickfix"),
   set_quickfix = require("src.lua.set-quickfix"),
 }
