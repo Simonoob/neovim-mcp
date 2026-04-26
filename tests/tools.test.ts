@@ -227,4 +227,23 @@ describe("Tools", () => {
       "tests/fixtures/typescript/index.ts:9:1 -- main();",
     );
   });
+
+  test("goto_implementation", async () => {
+    const { mockServer, handlers } = createMockServer();
+    let nvimClient = NeovimClient.getInstance();
+
+    registerTools(mockServer, nvimClient);
+
+    const handler = handlers.get("goto_implementation")!;
+    const filepath = `${await getProjectRoot()}/tests/fixtures/typescript/index.ts`;
+    const result = await handler({
+      file: filepath,
+      line: 9,
+      col: 1, // `main` function call
+    });
+    expect(result.content[0].text).toMatch("1 implementations");
+    expect(result.content[0].text).toMatch(
+      "tests/fixtures/typescript/index.ts:4:7",
+    );
+  });
 });

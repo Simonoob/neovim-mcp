@@ -318,47 +318,47 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
     },
   );
   //
-  // server.registerTool(
-  //   "goto_implementation",
-  //   {
-  //     description:
-  //       "Find implementations of an interface or abstract method via LSP",
-  //     inputSchema: {
-  //       file: z.string().describe("Absolute file path"),
-  //       line: z.number().describe("Line number (1-indexed)"),
-  //       col: z.number().describe("Column number (1-indexed)"),
-  //     },
-  //   },
-  //   async ({ file, line, col }) => {
-  //     try {
-  //       const cwd = await nvim.getCwd();
-  //       const result = await nvim.lua<
-  //         | Array<{
-  //             file: string;
-  //             line: number;
-  //             col: number;
-  //             signature: string;
-  //           }>
-  //         | { error: string }
-  //       >(IMPLEMENTATION_LUA, [file, line, col]);
-  //       if (!Array.isArray(result)) return toolResult(result.error);
-  //       if (!result.length)
-  //         return toolResult(
-  //           `No implementations found at ${relativePath(file, cwd)}:${line}:${col}.`,
-  //         );
-  //       const lines = result.flatMap((d) => {
-  //         const loc = `  ${relativePath(d.file, cwd)}:${d.line}:${d.col}`;
-  //         return d.signature ? [loc, `    ${d.signature}`] : [loc];
-  //       });
-  //       return toolResult(
-  //         `${result.length} implementations:\n\n${lines.join("\n")}`,
-  //       );
-  //     } catch (e) {
-  //       return toolError(e);
-  //     }
-  //   },
-  // );
-  //
+  server.registerTool(
+    "goto_implementation",
+    {
+      description:
+        "Find implementations of an interface or abstract method via LSP",
+      inputSchema: {
+        file: z.string().describe("Absolute file path"),
+        line: z.number().describe("Line number (1-indexed)"),
+        col: z.number().describe("Column number (1-indexed)"),
+      },
+    },
+    async ({ file, line, col }) => {
+      try {
+        const cwd = await nvim.getCwd();
+        const result = await nvim.callLuaFunction<
+          | Array<{
+              file: string;
+              line: number;
+              col: number;
+              signature: string;
+            }>
+          | { error: string }
+        >(`${INDEX_LUA}.goto_implementation`, [file, line, col]);
+        if (!Array.isArray(result)) return toolResult(result.error);
+        if (!result.length)
+          return toolResult(
+            `No implementations found at ${relativePath(file, cwd)}:${line}:${col}.`,
+          );
+        const lines = result.flatMap((d) => {
+          const loc = `  ${relativePath(d.file, cwd)}:${d.line}:${d.col}`;
+          return d.signature ? [loc, `    ${d.signature}`] : [loc];
+        });
+        return toolResult(
+          `${result.length} implementations:\n\n${lines.join("\n")}`,
+        );
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
+
   server.registerTool(
     "hover",
     {
