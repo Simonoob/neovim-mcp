@@ -47,6 +47,7 @@ export class NeovimClient {
         )
         .join(",")
         .replaceAll(/,$/gm, ""); //remove trailing ","
+      // throw `${code}(${formattedArgs})`;
       return (await nvim.lua(`${code}(${formattedArgs})`)) as T;
     } catch (error) {
       throw new Error(

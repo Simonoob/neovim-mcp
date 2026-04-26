@@ -84,6 +84,27 @@ export function registerTools(server: McpServer, nvim: NeovimClient) {
       }
     },
   );
+  server.registerTool(
+    "get_lsp",
+    {
+      description: "get all running LSP clients and all available ones",
+    },
+    async () => {
+      try {
+        const result = await nvim.callLuaFunction<
+          { active: string[]; available: string[] } | { error: string }
+        >(`${INDEX_LUA}.get_lsp`);
+        if ("error" in result) return toolResult(result.error);
+        const active = result.active.length ? result.active.join(", ") : "none";
+        const available = result.available.length
+          ? result.available.join(", ")
+          : "none";
+        return toolResult(`active: ${active}\navailable: ${available}`);
+      } catch (e) {
+        return toolError(e);
+      }
+    },
+  );
 
   server.registerTool(
     "get_document_symbols",

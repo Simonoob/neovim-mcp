@@ -12,10 +12,19 @@ local lsp_available_await = function(bufnr)
   end
 end
 
+local function table_map(tbl, f)
+  local t = {}
+  for k, v in pairs(tbl) do
+    t[k] = f(v)
+  end
+  return t
+end
+
 ---@type table
 local utils = {
   load_buffer_with_path = load_buffer_with_path,
   lsp_available_await = lsp_available_await,
+  table_map = table_map,
 }
 
 return utils
