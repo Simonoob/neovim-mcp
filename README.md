@@ -1,3 +1,7 @@
+> [!CAUTION]
+⚠️ **WIP**: This MCP in under heavy development and testing. It should not be considered stable.
+
+
 # neovim-mcp
 Make your AI agent leverage Neovim for code navigation.
 
