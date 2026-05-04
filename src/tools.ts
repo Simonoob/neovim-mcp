@@ -1,17 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { NeovimClient } from "./neovim.js";
-import {
-  toolResult,
-  toolError,
-  relativePath,
-  getProjectRoot,
-} from "./utils.js";
+import { toolResult, toolError, relativePath } from "./utils.js";
 
 // Lua snippets are read once at startup — MCP server restart needed after changes
-const luaDir = join(await getProjectRoot(), "/build/", "lua");
+const luaDir = join(dirname(fileURLToPath(import.meta.url)), "lua");
 
 const INDEX_LUA = readFileSync(join(luaDir, "index.lua"), "utf-8");
 
